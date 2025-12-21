@@ -1,0 +1,19 @@
+{
+  "name": "ACC-Strategist",
+  "short_name": "ACC-Strategist",
+  "description": "Fuel & Tire Strategy for Assetto Corsa Competizione",
+  "start_url": ".",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
