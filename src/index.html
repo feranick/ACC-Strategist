@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="icon" href="./icon.png">
+    <link rel="apple-touch-icon" href="./icon192.png">
+    <link rel="manifest" href="./manifest.json">
+    
+    <title>ACC Strategy Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background for racing theme */
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+        }
+        .input-group input[type="text"], 
+        .input-group input[type="number"], 
+        .input-group select {
+            background-color: #21262d;
+            border: 1px solid #484f58;
+            color: #c9d1d9;
+            transition: border-color 0.2s;
+        }
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus, 
+        .input-group select:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 1px #58a6ff;
+        }
+        .warning {
+            color: #fca5a5; /* Red-300 */
+            font-weight: 600;
+        }
+        .recommendation {
+            color: #fcd34d; /* Amber-300 */
+            font-weight: 500;
+        }
+        
+        /* Custom styles for the toggle button effect */
+        .toggle-label {
+            @apply cursor-pointer block p-3 text-center rounded-xl font-medium transition duration-200 ease-in-out text-gray-400;
+            background-color: #21262d; /* Off state background */
+            border: 1px solid #484f58; /* Off state border */
+        }
+        /* Hidden checkbox */
+        .toggle-checkbox {
+            display: none;
+        }
+        /* When the hidden checkbox is checked, style the associated label */
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #1f2937; /* Darker off state */
+            border-color: #58a6ff; /* Blue border when checked */
+            color: #58a6ff; /* Blue text when checked */
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen text-gray-200">
+
+    <div id="app" class="max-w-4xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-500">ACC Race Strategy Planner</h1>
+            <p class="text-gray-400 mt-2">Fuel & Tire Strategy for Assetto Corsa Competizione</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Inputs Card -->
+            <div class="lg:col-span-2 card p-6 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Race Inputs</h2>
+
+                <!-- Row 1: Strategy Setup (3 Columns) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="input-group">
+                        <label for="track" class="block text-sm font-medium mb-1 text-gray-400">Track</label>
+                        <select id="track" class="w-full p-2 rounded-lg" onchange="debounceSave()">
+                            <!-- Tracks populated here -->
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="car" class="block text-sm font-medium mb-1 text-gray-400">Car (Max Fuel Capacity)</label>
+                        <select id="car" class="w-full p-2 rounded-lg" onchange="debounceSave()">
+                            <!-- Cars populated here -->
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="fuelStrategy" class="block text-sm font-medium mb-1 text-gray-400">Fuel Strategy</label>
+                        <select id="fuelStrategy" class="w-full p-2 rounded-lg" onchange="debounceSave()">
+                            <option value="equal">Equal Load (Standard)</option>
+                            <option value="minimal">Minimal Load (Safety on last stint)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 2: Pace & Duration (3 Columns) -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="input-group">
+                        <label for="avgLapTime" class="block text-sm font-medium mb-1 text-gray-400">Avg Lap Time (M:SS.000)</label>
+                        <input type="text" id="avgLapTime" class="w-full p-2 rounded-lg" value="1:50.000" oninput="debounceSave()">
+                        <p class="text-xs text-gray-500 mt-1">e.g., 1:50.000 or 110</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="fuelPerLap" class="block text-sm font-medium mb-1 text-gray-400">Fuel / Lap (L)</label>
+                        <input type="number" id="fuelPerLap" class="w-full p-2 rounded-lg" value="3.2" step="0.1" min="0.1" oninput="debounceSave()">
+                        <p class="text-xs text-gray-500 mt-1">From car DDU/Setup screen.</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="raceDuration" class="block text-sm font-medium mb-1 text-gray-400">Race Duration (Flexible)</label>
+                        <input type="text" id="raceDuration" class="w-full p-2 rounded-lg" value="1h" oninput="debounceSave()">
+                        <p class="text-xs text-gray-500 mt-1">In hours (1.5h) or minutes (90m).</p>
+                    </div>
+                </div>
+                
+                <!-- Row 3: Limits and Pit Stop Toggles (3 Columns) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 border-t border-gray-700 pt-6">
+                    <div class="input-group">
+                        <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint Time (min)</label>
+                        <input type="number" id="maxStintTime" class="w-full p-2 rounded-lg" value="65" min="1" oninput="debounceSave()">
+                        <p class="text-xs text-gray-500 mt-1">Regulation limit (e.g., 65 min).</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="pitStops" class="block text-sm font-medium mb-1 text-gray-400">User Desired Pit Stops</label>
+                        <input type="number" id="pitStops" class="w-full p-2 rounded-lg" value="1" min="0" oninput="debounceSave()">
+                        <p class="text-xs text-gray-500 mt-1">Excludes formation lap stop.</p>
+                    </div>
+                    
+                    <!-- Empty slot for visual balance in 3-column grid -->
+                    <div class="hidden sm:block"></div> 
+                </div>
+
+                <!-- Row 4: TIGHT Pit Stop Action Toggles (3 Columns) -->
+                <h3 class="text-base font-semibold text-gray-300 mb-3 border-t border-gray-700 pt-3">Pit Stop Action Requirements (Server Rules)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <!-- Toggle 1: Refuel (Now checked by default) -->
+                    <div>
+                        <input type="checkbox" id="refuelRequired" class="toggle-checkbox" checked onchange="debounceSave()">
+                        <label for="refuelRequired" class="toggle-label">
+                            <svg class="w-5 h-5 inline mr-2 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1m5-10v-1a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                            Include Refuel
+                        </label>
+                    </div>
+                    <!-- Toggle 2: Tires (Now checked by default) -->
+                    <div>
+                        <input type="checkbox" id="tiresRequired" class="toggle-checkbox" checked onchange="debounceSave()">
+                        <label for="tiresRequired" class="toggle-label">
+                             <svg class="w-5 h-5 inline mr-2 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5-10v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2m0 0h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"></path></svg>
+                            Change Tires
+                        </label>
+                    </div>
+                    <!-- Toggle 3: Driver Swap (Was already checked by default) -->
+                    <div>
+                        <input type="checkbox" id="driverSwapRequired" checked class="toggle-checkbox" onchange="debounceSave()">
+                        <label for="driverSwapRequired" class="toggle-label">
+                            <svg class="w-5 h-5 inline mr-2 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-3a6 6 0 00-6-6v-1a4 4 0 014-4h4a4 4 0 014 4v1a6 6 0 00-6 6h-4z"></path></svg>
+                            Driver Swap
+                        </label>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Check the actions your server/league rules *require* at every planned pit stop.</p>
+                
+            </div>
+
+            <!-- Results Card -->
+            <div class="lg:col-span-1 card p-6 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Race Results</h2>
+                
+                <div id="results" class="space-y-4">
+                    <!-- Fuel Summary -->
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Estimated Laps</p>
+                        <p id="totalLaps" class="text-2xl font-extrabold text-white">--</p>
+                        <p class="text-sm text-gray-500">Includes final lap completion.</p>
+                    </div>
+                    
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Total Fuel Needed</p>
+                        <p id="totalFuel" class="text-2xl font-extrabold text-white">-- L</p>
+                        <p class="text-sm text-gray-500">Includes 2-lap safety buffer.</p>
+                    </div>
+
+                    <!-- New: Calculated Pit Stops -->
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Calculated Pit Stops</p>
+                        <p id="calculatedPits" class="text-2xl font-extrabold text-white">--</p>
+                        <p class="text-sm text-gray-500">The total stops used in strategy.</p>
+                    </div>
+                </div>
+
+                <!-- Error/Info Message -->
+                <div id="message" class="mt-4 p-3 bg-red-800/30 border border-red-700 rounded-lg text-red-300 hidden"></div>
+            </div>
+
+            <!-- Pit Strategy Card -->
+            <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl mt-6">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Stint & Pit Strategy (<span id="strategyType">Equal Load</span>)</h2>
+                
+                <div id="pitStrategy">
+                    <p class="text-lg font-semibold text-green-400">Laps Per Stint</p>
+                    <p id="lapsPerStint" class="text-xl font-bold text-white mb-4">-- Laps / Stint</p>
+
+                    <div id="stintDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Stint details populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tire Strategy Card -->
+            <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl mt-6">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Tire Strategy Guide</h2>
+                <p class="text-gray-300 mb-2">Tyres are crucial for performance. Always monitor your hot pressures in-game.</p>
+                
+                <div class="flex flex-wrap gap-4 mt-4">
+                    <div class="p-4 rounded-lg bg-green-900/40 w-full sm:w-auto flex-grow">
+                        <p class="font-semibold text-green-400">Optimal Dry Hot Pressure</p>
+                        <p class="text-xl font-bold text-white">26.0 - 27.0 PSI</p>
+                        <p class="text-sm text-gray-400">Adjust cold pressure to hit this range after 3-4 laps.</p>
+                    </div>
+                    <div class="p-4 rounded-lg bg-blue-900/40 w-full sm:w-auto flex-grow">
+                        <p class="font-semibold text-blue-400">Optimal Wet Hot Pressure</p>
+                        <p class="text-xl font-bold text-white">29.5 - 31.0 PSI</p>
+                        <p class="text-sm text-gray-400">Higher pressure needed due to lower track temperatures.</p>
+                    </div>
+                    <div class="p-4 rounded-lg bg-yellow-900/40 w-full sm:w-auto flex-grow">
+                        <p class="font-semibold text-yellow-400">Typical Tire Life</p>
+                        <p class="text-xl font-bold text-white">60 - 90 mins</p>
+                        <p class="text-sm text-gray-400">Tyres can be stretched to 90 mins+ with good management.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data for tracks and cars, based on typical ACC values.
+        const TRACK_DATA = [
+            { name: "Monza", lapTimeSeconds: 110, fuelPerLap: 3.2 },
+            { name: "Spa-Francorchamps", lapTimeSeconds: 150, fuelPerLap: 4.0 },
+            { name: "Brands Hatch", lapTimeSeconds: 85, fuelPerLap: 2.8 },
+            { name: "Nürburgring GP", lapTimeSeconds: 105, fuelPerLap: 3.5 },
+            { name: "Suzuka", lapTimeSeconds: 120, fuelPerLap: 3.7 },
+            { name: "Misano", lapTimeSeconds: 98, fuelPerLap: 3.0 },
+            { name: "COTA (Circuit of the Americas)", lapTimeSeconds: 135, fuelPerLap: 3.8 },
+            { name: "Indianapolis Road Course", lapTimeSeconds: 90, fuelPerLap: 2.9 },
+            { name: "Laguna Seca", lapTimeSeconds: 85, fuelPerLap: 2.8 },
+            { name: "Kyalami", lapTimeSeconds: 98, fuelPerLap: 3.3 },
+            { name: "Mount Panorama (Bathurst)", lapTimeSeconds: 125, fuelPerLap: 3.5 },
+            { name: "Paul Ricard", lapTimeSeconds: 128, fuelPerLap: 3.8 },
+            
+            { name: "Barcelona-Catalunya", lapTimeSeconds: 100, fuelPerLap: 3.4 },
+            { name: "Zolder", lapTimeSeconds: 90, fuelPerLap: 3.0 },
+            { name: "Hungaroring", lapTimeSeconds: 98, fuelPerLap: 3.1 },
+            { name: "Silverstone", lapTimeSeconds: 120, fuelPerLap: 3.8 },
+            { name: "Valencia (Ricardo Tormo)", lapTimeSeconds: 93, fuelPerLap: 2.9 },
+            { name: "Zandvoort", lapTimeSeconds: 95, fuelPerLap: 3.1 },
+            { name: "Imola", lapTimeSeconds: 105, fuelPerLap: 3.4 },
+            { name: "Red Bull Ring", lapTimeSeconds: 88, fuelPerLap: 3.0 },
+            { name: "Oulton Park (Intl.)", lapTimeSeconds: 90, fuelPerLap: 3.1 },
+            { name: "Snetterton (300)", lapTimeSeconds: 115, fuelPerLap: 3.5 },
+            { name: "Donington Park (GP)", lapTimeSeconds: 105, fuelPerLap: 3.3 },
+        ];
+
+        // Updated CAR_DATA (most use a 120L tank)
+        const CAR_DATA = [
+            { name: "Aston Martin V8 Vantage GT3", capacity: 120 },
+            { name: "Audi R8 LMS GT3 EVO II", capacity: 120 },
+            { name: "Bentley Continental GT3 (2018)", capacity: 120 },
+            { name: "BMW M4 GT3", capacity: 120 },
+            { name: "BMW M6 GT3", capacity: 120 },
+            { name: "Ferrari 296 GT3", capacity: 120 },
+            { name: "Ferrari 488 GT3 EVO", capacity: 120 },
+            { name: "Ford Mustang GT3", capacity: 120 },
+            { name: "Honda NSX GT3 EVO", capacity: 120 },
+            { name: "Jaguar G3", capacity: 120 },
+            { name: "Lamborghini Huracán GT3 EVO 2", capacity: 120 },
+            { name: "Lexus RC F GT3", capacity: 120 },
+            { name: "McLaren 650S GT3", capacity: 120 },
+            { name: "McLaren 720S GT3 EVO", capacity: 120 },
+            { name: "Mercedes-AMG GT3 EVO", capacity: 120 },
+            { name: "Nissan GT-R Nismo GT3 (2018)", capacity: 120 },
+            { name: "Porsche 991 GT3 R (2018)", capacity: 120 },
+            { name: "Porsche 992 GT3 R", capacity: 120 },
+            { name: "Generic GT4 Car (100L Tank)", capacity: 100 },
+        ];
+        
+        // Safety margin (fuel for two extra laps)
+        const SAFETY_LAPS = 2; 
+        
+        // --- DOM Elements ---
+        const trackSelect = document.getElementById('track');
+        const carSelect = document.getElementById('car');
+        const fuelStrategySelect = document.getElementById('fuelStrategy');
+        const avgLapTimeInput = document.getElementById('avgLapTime');
+        const fuelPerLapInput = document.getElementById('fuelPerLap');
+        const raceDurationInput = document.getElementById('raceDuration'); 
+        const maxStintTimeInput = document.getElementById('maxStintTime'); 
+        const pitStopsInput = document.getElementById('pitStops');
+
+        // CHECKBOX ELEMENTS
+        const refuelRequiredCheckbox = document.getElementById('refuelRequired');
+        const tiresRequiredCheckbox = document.getElementById('tiresRequired');
+        const driverSwapRequiredCheckbox = document.getElementById('driverSwapRequired');
+
+
+        const totalLapsElement = document.getElementById('totalLaps');
+        const totalFuelElement = document.getElementById('totalFuel');
+        const calculatedPitsElement = document.getElementById('calculatedPits'); 
+        const lapsPerStintElement = document.getElementById('lapsPerStint');
+        const stintDetailsElement = document.getElementById('stintDetails');
+        const messageElement = document.getElementById('message');
+        const strategyTypeElement = document.getElementById('strategyType');
+
+        // --- Cookie Functions for Persistence ---
+
+        /**
+         * Sets a cookie with a given name, value, and expiration days.
+         * @param {string} name 
+         * @param {string} value 
+         * @param {number} days 
+         */
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; samesite=Lax";
+        }
+
+        /**
+         * Gets the value of a specified cookie.
+         * @param {string} name 
+         * @returns {string | null}
+         */
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        const COOKIE_NAME = 'acc_strategy_settings';
+        let saveTimeout;
+
+        /**
+         * Debounces the save function to prevent excessive calls.
+         */
+        function debounceSave() {
+            window.clearTimeout(saveTimeout);
+            saveTimeout = window.setTimeout(saveSettings, 500);
+            calculateStrategy(); // Recalculate immediately for responsiveness
+        }
+
+        /**
+         * Gathers all current input values and saves them as a JSON string to a cookie.
+         */
+        function saveSettings() {
+            const settings = {
+                track: trackSelect.value,
+                car: carSelect.value,
+                fuelStrategy: fuelStrategySelect.value,
+                avgLapTime: avgLapTimeInput.value,
+                fuelPerLap: fuelPerLapInput.value,
+                raceDuration: raceDurationInput.value,
+                maxStintTime: maxStintTimeInput.value,
+                pitStops: pitStopsInput.value,
+                // Checkbox states
+                refuelRequired: refuelRequiredCheckbox.checked,
+                tiresRequired: tiresRequiredCheckbox.checked,
+                driverSwapRequired: driverSwapRequiredCheckbox.checked,
+            };
+            const jsonValue = JSON.stringify(settings);
+            setCookie(COOKIE_NAME, jsonValue, 30); // Save for 30 days
+            // console.log("Settings saved to cookie.");
+        }
+
+        /**
+         * Loads settings from the cookie and applies them to the inputs.
+         */
+        function loadSettings() {
+            const jsonValue = getCookie(COOKIE_NAME);
+            if (jsonValue) {
+                try {
+                    const settings = JSON.parse(jsonValue);
+                    
+                    // Apply loaded settings to inputs, falling back to current value if cookie is missing a key
+                    trackSelect.value = settings.track || trackSelect.value;
+                    carSelect.value = settings.car || carSelect.value;
+                    fuelStrategySelect.value = settings.fuelStrategy || fuelStrategySelect.value;
+                    
+                    avgLapTimeInput.value = settings.avgLapTime || avgLapTimeInput.value;
+                    fuelPerLapInput.value = settings.fuelPerLap || fuelPerLapInput.value;
+                    raceDurationInput.value = settings.raceDuration || raceDurationInput.value;
+                    maxStintTimeInput.value = settings.maxStintTime || maxStintTimeInput.value;
+                    pitStopsInput.value = settings.pitStops || pitStopsInput.value;
+
+                    // Checkbox assignments with fallback defaults
+                    // NOTE: Defaulting to TRUE for all pit action requirements as requested
+                    refuelRequiredCheckbox.checked = settings.refuelRequired !== undefined ? settings.refuelRequired : true;
+                    tiresRequiredCheckbox.checked = settings.tiresRequired !== undefined ? settings.tiresRequired : true;
+                    driverSwapRequiredCheckbox.checked = settings.driverSwapRequired !== undefined ? settings.driverSwapRequired : true;
+                    
+                } catch (e) {
+                    console.error("Error parsing cookie settings:", e);
+                }
+            }
+            // Run calculation based on either loaded or default values
+            calculateStrategy();
+        }
+
+        // --- Core Calculator Logic ---
+
+        /**
+         * Converts a lap time string (M:SS.XXX or SSS.X) to total seconds.
+         * @param {string} timeString
+         * @returns {number} Total seconds, or 0 if invalid.
+         */
+        function parseLapTime(timeString) {
+            timeString = String(timeString).trim();
+            
+            const parts = timeString.split(':');
+            if (parts.length === 2) {
+                const minutes = parseFloat(parts[0]);
+                const seconds = parseFloat(parts[1]);
+                if (!isNaN(minutes) && !isNaN(seconds)) {
+                    return (minutes * 60) + seconds;
+                }
+            }
+            
+            const secondsOnly = parseFloat(timeString);
+            if (!isNaN(secondsOnly) && secondsOnly > 0) {
+                return secondsOnly;
+            }
+            
+            return 0;
+        }
+
+        /**
+         * Converts total seconds to M:SS.XXX display format.
+         * @param {number} totalSeconds
+         * @returns {string} Formatted time string (M:SS.000).
+         */
+        function formatLapTime(totalSeconds) {
+            if (isNaN(totalSeconds) || totalSeconds <= 0) return "0:00.000";
+
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = (totalSeconds % 60);
+            
+            const secondsString = seconds.toFixed(3);
+            const [wholeSeconds, ms] = secondsString.split('.');
+            const paddedWholeSeconds = (minutes > 0 || wholeSeconds.length === 1) ? wholeSeconds.padStart(2, '0') : wholeSeconds;
+
+            return `${minutes}:${paddedWholeSeconds}.${ms}`;
+        }
+        
+        /**
+         * Parses a flexible duration string (e.g., "1.5h", "90m", "2") into total seconds.
+         * Defaults to hours if no unit is specified.
+         * @param {string} durationString
+         * @returns {number} Total seconds, or 0 if invalid.
+         */
+        function parseDuration(durationString) {
+            durationString = String(durationString).trim().toLowerCase();
+
+            const match = durationString.match(/^(\d+(\.\d+)?)\s*(h|m)?$/);
+            if (!match) return 0;
+
+            const value = parseFloat(match[1]);
+            const unit = match[3];
+
+            if (isNaN(value) || value <= 0) return 0;
+
+            if (unit === 'm') {
+                return value * 60; 
+            } else { // Default to hours if 'h' or no unit is provided
+                return value * 3600; 
+            }
+        }
+
+
+        /**
+         * Populates the track and car dropdowns and sets initial data.
+         */
+        function initializeData() {
+            // Populate Tracks
+            TRACK_DATA.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.name;
+                option.textContent = `${track.name} (Avg Lap: ${formatLapTime(track.lapTimeSeconds)})`;
+                trackSelect.appendChild(option);
+            });
+            
+            // Populate Cars
+            CAR_DATA.forEach(car => {
+                const option = document.createElement('option');
+                option.value = car.name;
+                option.textContent = `${car.name} (Tank: ${car.capacity}L)`;
+                carSelect.appendChild(option);
+            });
+            
+            // Set initial defaults if not loaded from cookie
+            const defaultTrack = TRACK_DATA[0];
+            avgLapTimeInput.value = formatLapTime(defaultTrack.lapTimeSeconds); 
+            fuelPerLapInput.value = defaultTrack.fuelPerLap;
+
+            // Load saved settings from cookies
+            loadSettings();
+        }
+
+        /**
+         * Main function to perform all calculations and update the UI.
+         */
+        function calculateStrategy() {
+            messageElement.classList.add('hidden');
+            
+            // 1. Get User Inputs
+            const avgLapTimeSeconds = parseLapTime(avgLapTimeInput.value); 
+            const fuelPerLap = parseFloat(fuelPerLapInput.value);
+            const raceDurationString = raceDurationInput.value; 
+            const maxStintTimeMinutes = parseFloat(maxStintTimeInput.value); 
+            const userDesiredPitStops = parseInt(pitStopsInput.value);
+            const fuelStrategy = fuelStrategySelect.value;
+            
+            const selectedCarName = carSelect.value;
+            const carCapacity = CAR_DATA.find(c => c.name === selectedCarName)?.capacity || 120;
+            
+            // Get Checkbox States
+            const refuelRequired = refuelRequiredCheckbox.checked;
+            const tiresRequired = tiresRequiredCheckbox.checked;
+            const driverSwapRequired = driverSwapRequiredCheckbox.checked;
+
+            // 2. Core Calculations 
+            const raceDurationSeconds = parseDuration(raceDurationString);
+            const raceDurationMinutes = raceDurationSeconds / 60;
+
+            // 3. Input Validation 
+            if (isNaN(avgLapTimeSeconds) || avgLapTimeSeconds <= 0 || 
+                isNaN(fuelPerLap) || fuelPerLap <= 0 || 
+                isNaN(raceDurationSeconds) || raceDurationSeconds <= 0 || 
+                isNaN(maxStintTimeMinutes) || maxStintTimeMinutes <= 0 ||
+                isNaN(userDesiredPitStops) || userDesiredPitStops < 0) {
+                
+                totalLapsElement.textContent = '--';
+                totalFuelElement.textContent = '-- L';
+                calculatedPitsElement.textContent = '--';
+                lapsPerStintElement.textContent = '-- Laps / Stint';
+                stintDetailsElement.innerHTML = '';
+                if (avgLapTimeInput.value || fuelPerLapInput.value || raceDurationInput.value) {
+                    messageElement.textContent = 'Please ensure all inputs (especially Avg Lap Time, Fuel/Lap, and Race Duration) are valid and positive.';
+                    messageElement.classList.remove('hidden');
+                }
+                return;
+            }
+
+            // Total Laps (Rounded UP to ensure the final lap is completed)
+            const estimatedTotalLaps = Math.ceil(raceDurationSeconds / avgLapTimeSeconds);
+            
+            // Total Fuel needed 
+            const baseFuelRequired = estimatedTotalLaps * fuelPerLap;
+            const safetyFuel = SAFETY_LAPS * fuelPerLap;
+            const totalFuelRequired = baseFuelRequired + safetyFuel;
+            
+            // --- Stint Regulation Enforcement (Time based) ---
+            let pitStopsToUse = userDesiredPitStops;
+            let timeWarning = false;
+
+            const requiredStintsByTime = Math.ceil(raceDurationMinutes / maxStintTimeMinutes);
+            const requiredPitsByTime = Math.max(0, requiredStintsByTime - 1);
+
+            if (userDesiredPitStops < requiredPitsByTime) {
+                pitStopsToUse = requiredPitsByTime;
+                timeWarning = true;
+            }
+            // --- End Regulation Enforcement ---
+
+            // 4. Stint and Pit Strategy Calculation
+            const totalStints = pitStopsToUse + 1;
+            const lapsPerStint = Math.ceil(estimatedTotalLaps / totalStints);
+            const stintTimeSeconds = lapsPerStint * avgLapTimeSeconds;
+            const stintTimeMinutes = stintTimeSeconds / 60;
+            
+            totalLapsElement.textContent = estimatedTotalLaps;
+            totalFuelElement.textContent = `${totalFuelRequired.toFixed(1)} L`;
+            calculatedPitsElement.textContent = pitStopsToUse;
+            lapsPerStintElement.textContent = `${lapsPerStint} Laps / Stint (${stintTimeMinutes.toFixed(1)} min)`;
+            
+            // 5. Calculate Fuel Loads 
+            let fuelLoads = [];
+            let totalFuelLoaded = 0;
+            
+            if (fuelStrategy === 'equal') {
+                strategyTypeElement.textContent = 'Equal Load';
+                // Calculate required fuel per stint (rounded up to nearest 0.1L for safety)
+                const equalStintFuel = Math.ceil((totalFuelRequired / totalStints) * 10) / 10;
+                
+                for (let i = 0; i < totalStints; i++) {
+                    fuelLoads.push(equalStintFuel);
+                    totalFuelLoaded += equalStintFuel;
+                }
+                
+                // Adjust the final stint for rounding errors
+                const roundingError = totalFuelLoaded - totalFuelRequired;
+                fuelLoads[totalStints - 1] = Math.max(0, fuelLoads[totalStints - 1] - roundingError);
+                // Ensure no negative fuel in final stint due to over-aggressive rounding adjustment
+                if (fuelLoads[totalStints - 1] < 0) fuelLoads[totalStints - 1] = 0;
+
+            } else if (fuelStrategy === 'minimal') {
+                strategyTypeElement.textContent = 'Minimal Load';
+
+                // Base stint fuel for all but the last stint
+                const minimalStintFuel = Math.ceil((lapsPerStint * fuelPerLap) * 10) / 10;
+                
+                for (let i = 0; i < totalStints - 1; i++) {
+                    fuelLoads.push(minimalStintFuel);
+                    totalFuelLoaded += minimalStintFuel;
+                }
+
+                // Final stint takes the remainder fuel (plus safety)
+                const finalStintFuel = totalFuelRequired - totalFuelLoaded;
+                fuelLoads.push(Math.ceil(finalStintFuel * 10) / 10);
+            }
+
+            // 6. Check for over-fueling per stint & display warning
+            const maxFuelLoad = Math.max(...fuelLoads);
+            
+            if (maxFuelLoad > carCapacity) {
+                messageElement.textContent = `CRITICAL WARNING: Calculated fuel load for one stint (${maxFuelLoad.toFixed(1)} L) exceeds car capacity (${carCapacity} L). Increase stops or reduce race duration.`;
+                messageElement.classList.remove('hidden');
+            } else if (timeWarning) {
+                 messageElement.textContent = `NOTE: Desired stops (${userDesiredPitStops}) was too few. Strategy adjusted to ${pitStopsToUse} stop(s) to meet Max Stint Time (${maxStintTimeMinutes} min).`;
+                messageElement.classList.remove('hidden');
+            }
+
+            // 7. Generate detailed stint plan UI
+            stintDetailsElement.innerHTML = '';
+            
+            let currentLap = 0;
+            
+            const baseActions = [];
+            if (refuelRequired) baseActions.push('Fuel');
+            if (tiresRequired) baseActions.push('Tires');
+            if (driverSwapRequired) baseActions.push('Driver');
+
+            const baseActionsText = baseActions.length > 0 
+                ? baseActions.join(', ')
+                : 'None';
+
+            for (let i = 0; i < totalStints; i++) {
+                let stintLaps = lapsPerStint;
+                
+                if (i === totalStints - 1) {
+                    stintLaps = estimatedTotalLaps - currentLap;
+                }
+                
+                const pitLap = (i < totalStints - 1) ? currentLap + stintLaps : 'Race End';
+                const stintMins = (stintLaps * avgLapTimeSeconds) / 60;
+                
+                let dynamicNotes = [];
+
+                if (i < totalStints - 1) { // Only for pit stops, not the final stint
+                    // Driver Swap Regulation Check (Always critical)
+                    if (stintMins > maxStintTimeMinutes) {
+                        dynamicNotes.push('<span class="warning">CRITICAL: Exceeds Max Stint Time!</span>');
+                    } else if (!driverSwapRequired && stintMins > 65) {
+                        dynamicNotes.push('<span class="warning">WARNING: Stint is longer than ACC\'s 65-min driver swap rule.</span>');
+                    }
+
+                    // Tire Change Recommendation (Soft Warning)
+                    if (!tiresRequired && stintMins > 60) {
+                        dynamicNotes.push('<span class="recommendation">RECOMMENDATION: Tires are likely worn past 60 min. Consider changing.</span>');
+                    }
+
+                    // Refuel Recommendation Check (NEW)
+                    // Check if refueling is NOT a required rule, but the stint itself still needs fuel.
+                    if (!refuelRequired && fuelLoads[i] > 0.1) {
+                        dynamicNotes.push('<span class="recommendation">RECOMMENDATION: Refueling is required to complete this stint. Ensure you set the pit stop fuel load, even if the server does not enforce the Refuel pit action.</span>');
+                    }
+                }
+                
+                const notesHtml = dynamicNotes.length > 0 ? `<div class="mt-2 space-y-1 text-sm">${dynamicNotes.join('')}</div>` : '';
+
+                const stintCard = `
+                    <div class="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+                        <p class="font-bold text-lg text-yellow-300">Stint ${i + 1} (Laps: ${stintLaps})</p>
+                        <p class="text-white">Fuel Load: <span class="font-mono">${fuelLoads[i].toFixed(1)} L</span></p>
+                        <p class="text-sm text-gray-400">
+                            ${i < totalStints - 1 ? `Pit at Lap: <span class="font-mono">${pitLap}</span>` : 'Final Stint'}
+                            <br>
+                            <span class="text-blue-300 text-xs">Pit Actions (Server Rules): ${i < totalStints - 1 ? baseActionsText : 'N/A'}</span>
+                            ${notesHtml}
+                        </p>
+                    </div>
+                `;
+                stintDetailsElement.innerHTML += stintCard;
+
+                currentLap += stintLaps;
+            }
+        }
+
+        window.onload = initializeData;
+
+        // Expose debounceSave globally for HTML oninput/onchange events
+        window.debounceSave = debounceSave; 
+
+        /**
+         * Handles track change: updates initial pace and fuel suggestions, then saves.
+         */
+        trackSelect.addEventListener('change', () => {
+            const selectedTrackName = trackSelect.value;
+            const track = TRACK_DATA.find(t => t.name === selectedTrackName);
+            
+            if (track) {
+                avgLapTimeInput.value = formatLapTime(track.lapTimeSeconds);
+                fuelPerLapInput.value = track.fuelPerLap;
+                // Since the inputs changed, trigger save (which also triggers calculation)
+                debounceSave(); 
+            }
+        });
+
+    </script>
+</body>
+</html>
