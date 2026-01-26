@@ -53,13 +53,13 @@
 </head>
 <body class="p-4 md:p-8 min-h-screen text-gray-200">
 
-    <div id="app" class="max-w-7xl mx-auto">
+    <div id="app" class="max-w-7xl mx-auto flex flex-col min-h-screen">
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-extrabold text-blue-500">ACC Strategist</h1>
             <p class="text-gray-400 mt-2">Race Strategy & Setup Engineering Assistant</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
 
             <!-- Inputs Card -->
             <div class="lg:col-span-2 card p-6 rounded-xl shadow-2xl">
@@ -149,9 +149,17 @@
                 <div id="stintDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
+
+        <!-- Version Footer -->
+        <footer class="mt-8 pb-4 text-center">
+            <p id="footer-version" class="text-xs text-gray-600 font-mono"></p>
+        </footer>
     </div>
 
     <script>
+        // Use Calendar Versioning (CalVer): YYYY.MM.DD.Revision
+        const APP_VERSION = '2026.01.26.2';
+
         // Track data overhaul - Adjusted baseFuel for modern ACC (1.9+)
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
@@ -288,7 +296,7 @@
             if (track.curbs === "Extreme" || track.curbs === "Very High") {
                 suspension = car.enginePos === "Mid" ? "Soften front springs to avoid bouncing." : "Soften bumpstops for curb jumping.";
             } else if (track.curbs === "Low") {
-                suspension = "Stiffen suspension for aero platform stability.";
+                suspension = "Stiffen suspension for aero stability.";
             }
             advice.push({ title: "Suspension", text: suspension });
 
@@ -377,6 +385,9 @@
         }
 
         window.onload = () => {
+            // Inject Version
+            document.getElementById('footer-version').textContent = 'v' + APP_VERSION;
+
             TRACK_DATA.sort((a, b) => a.name.localeCompare(b.name)).forEach(t => trackSelect.add(new Option(t.name, t.name)));
             CAR_DATA.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => carSelect.add(new Option(c.name, c.name)));
             
