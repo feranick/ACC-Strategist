@@ -152,39 +152,41 @@
     </div>
 
     <script>
+        // Track data overhaul - Adjusted baseFuel for modern ACC (1.9+)
         const TRACK_DATA = [
-            { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 3.2, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
-            { name: "Brands Hatch", lapTimeSeconds: 85, baseFuel: 2.5, aero: "High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "10-12" },
-            { name: "COTA", lapTimeSeconds: 135, baseFuel: 3.6, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 20, wing: "8-10" },
-            { name: "Donington", lapTimeSeconds: 105, baseFuel: 3.1, aero: "Med-High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "7-9" },
-            { name: "Hungaroring", lapTimeSeconds: 105, baseFuel: 2.9, aero: "Very High", curbs: "Med", brakeWear: 2, rakeDiff: 30, wing: "11-13" },
-            { name: "Imola", lapTimeSeconds: 105, baseFuel: 3.2, aero: "High", curbs: "High", brakeWear: 3, rakeDiff: 25, wing: "8-10" },
-            { name: "Indianapolis", lapTimeSeconds: 90, baseFuel: 2.7, aero: "Med-Low", curbs: "Low", brakeWear: 2, rakeDiff: 15, wing: "3-5" },
-            { name: "Kyalami", lapTimeSeconds: 98, baseFuel: 3.1, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
-            { name: "Laguna Seca", lapTimeSeconds: 85, baseFuel: 2.6, aero: "High", curbs: "High", brakeWear: 2, rakeDiff: 25, wing: "8-10" },
-            { name: "Misano", lapTimeSeconds: 98, baseFuel: 2.9, aero: "High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "9-11" },
-            { name: "Monza", lapTimeSeconds: 110, baseFuel: 3.2, aero: "Very Low", curbs: "Extreme", brakeWear: 3, rakeDiff: 10, wing: "0-2" },
-            { name: "Mount Panorama", lapTimeSeconds: 125, baseFuel: 3.4, aero: "Med-Low", curbs: "High", brakeWear: 2, rakeDiff: 15, wing: "4-6" },
-            { name: "Nürburgring GP", lapTimeSeconds: 105, baseFuel: 3.3, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "8-10" },
-            { name: "Oulton Park", lapTimeSeconds: 95, baseFuel: 2.8, aero: "High", curbs: "Very High", brakeWear: 1, rakeDiff: 25, wing: "10-12" },
-            { name: "Paul Ricard", lapTimeSeconds: 128, baseFuel: 3.6, aero: "Low", curbs: "Low", brakeWear: 2, rakeDiff: 10, wing: "1-3" },
-            { name: "Red Bull Ring", lapTimeSeconds: 88, baseFuel: 2.7, aero: "Med", curbs: "High", brakeWear: 3, rakeDiff: 20, wing: "4-6" },
-            { name: "Silverstone", lapTimeSeconds: 120, baseFuel: 3.6, aero: "High", curbs: "Low", brakeWear: 1, rakeDiff: 25, wing: "8-10" },
-            { name: "Snetterton", lapTimeSeconds: 110, baseFuel: 3.3, aero: "Med-High", curbs: "Med", brakeWear: 1, rakeDiff: 20, wing: "6-8" },
-            { name: "Spa-Francorchamps", lapTimeSeconds: 150, baseFuel: 3.9, aero: "Med-Low", curbs: "Med", brakeWear: 2, rakeDiff: 15, wing: "3-5" },
-            { name: "Suzuka", lapTimeSeconds: 120, baseFuel: 3.5, aero: "High", curbs: "Med", brakeWear: 1, rakeDiff: 25, wing: "9-11" },
-            { name: "Valencia", lapTimeSeconds: 93, baseFuel: 2.7, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
-            { name: "Zandvoort", lapTimeSeconds: 95, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 1, rakeDiff: 30, wing: "10-12" },
-            { name: "Zolder", lapTimeSeconds: 90, baseFuel: 2.8, aero: "Med", curbs: "Extreme", brakeWear: 3, rakeDiff: 20, wing: "5-7" }
+            { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
+            { name: "Brands Hatch", lapTimeSeconds: 85, baseFuel: 2.3, aero: "High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "10-12" },
+            { name: "COTA", lapTimeSeconds: 135, baseFuel: 3.3, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 20, wing: "8-10" },
+            { name: "Donington", lapTimeSeconds: 105, baseFuel: 2.8, aero: "Med-High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "7-9" },
+            { name: "Hungaroring", lapTimeSeconds: 105, baseFuel: 2.6, aero: "Very High", curbs: "Med", brakeWear: 2, rakeDiff: 30, wing: "11-13" },
+            { name: "Imola", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "High", brakeWear: 3, rakeDiff: 25, wing: "8-10" },
+            { name: "Indianapolis", lapTimeSeconds: 90, baseFuel: 2.5, aero: "Med-Low", curbs: "Low", brakeWear: 2, rakeDiff: 15, wing: "3-5" },
+            { name: "Kyalami", lapTimeSeconds: 98, baseFuel: 2.8, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
+            { name: "Laguna Seca", lapTimeSeconds: 85, baseFuel: 2.4, aero: "High", curbs: "High", brakeWear: 2, rakeDiff: 25, wing: "8-10" },
+            { name: "Misano", lapTimeSeconds: 98, baseFuel: 2.7, aero: "High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "9-11" },
+            { name: "Monza", lapTimeSeconds: 110, baseFuel: 2.9, aero: "Very Low", curbs: "Extreme", brakeWear: 3, rakeDiff: 10, wing: "0-2" },
+            { name: "Mount Panorama", lapTimeSeconds: 125, baseFuel: 3.1, aero: "Med-Low", curbs: "High", brakeWear: 2, rakeDiff: 15, wing: "4-6" },
+            { name: "Nürburgring GP", lapTimeSeconds: 105, baseFuel: 3.0, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "8-10" },
+            { name: "Oulton Park", lapTimeSeconds: 95, baseFuel: 2.6, aero: "High", curbs: "Very High", brakeWear: 1, rakeDiff: 25, wing: "10-12" },
+            { name: "Paul Ricard", lapTimeSeconds: 128, baseFuel: 3.3, aero: "Low", curbs: "Low", brakeWear: 2, rakeDiff: 10, wing: "1-3" },
+            { name: "Red Bull Ring", lapTimeSeconds: 88, baseFuel: 2.4, aero: "Med", curbs: "High", brakeWear: 3, rakeDiff: 20, wing: "4-6" },
+            { name: "Silverstone", lapTimeSeconds: 120, baseFuel: 3.3, aero: "High", curbs: "Low", brakeWear: 1, rakeDiff: 25, wing: "8-10" },
+            { name: "Snetterton", lapTimeSeconds: 110, baseFuel: 3.0, aero: "Med-High", curbs: "Med", brakeWear: 1, rakeDiff: 20, wing: "6-8" },
+            { name: "Spa-Francorchamps", lapTimeSeconds: 150, baseFuel: 3.5, aero: "Med-Low", curbs: "Med", brakeWear: 2, rakeDiff: 15, wing: "3-5" },
+            { name: "Suzuka", lapTimeSeconds: 120, baseFuel: 3.2, aero: "High", curbs: "Med", brakeWear: 1, rakeDiff: 25, wing: "9-11" },
+            { name: "Valencia", lapTimeSeconds: 93, baseFuel: 2.4, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
+            { name: "Zandvoort", lapTimeSeconds: 95, baseFuel: 2.6, aero: "High", curbs: "Med", brakeWear: 1, rakeDiff: 30, wing: "10-12" },
+            { name: "Zolder", lapTimeSeconds: 90, baseFuel: 2.5, aero: "Med", curbs: "Extreme", brakeWear: 3, rakeDiff: 20, wing: "5-7" }
         ];
 
+        // Car data overhaul - Efficiency factors refined (0.93 - 1.10)
         const CAR_DATA = [
             { name: "Aston Martin V8 Vantage", capacity: 120, factor: 1.0, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
             { name: "Audi R8 LMS EVO II", capacity: 120, factor: 1.02, enginePos: "Mid", stability: "Low", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54 },
             { name: "Bentley Continental", capacity: 120, factor: 1.08, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60 },
-            { name: "BMW M4 GT3", capacity: 120, factor: 1.02, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
+            { name: "BMW M4 GT3", capacity: 120, factor: 0.94, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
             { name: "BMW M6 GT3", capacity: 120, factor: 1.05, enginePos: "Front", stability: "Med", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60 },
-            { name: "Ferrari 296 GT3", capacity: 120, factor: 0.98, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 52 },
+            { name: "Ferrari 296 GT3", capacity: 120, factor: 0.96, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 52 },
             { name: "Ferrari 488 EVO", capacity: 120, factor: 1.0, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53 },
             { name: "Ford Mustang GT3", capacity: 120, factor: 1.1, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
             { name: "Generic GT4 Car", capacity: 100, factor: 0.7, enginePos: "Mid", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 70 },
@@ -192,14 +194,14 @@
             { name: "Jaguar G3", capacity: 120, factor: 1.05, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
             { name: "Lamborghini Huracán EVO 2", capacity: 120, factor: 1.03, enginePos: "Mid", stability: "Low", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53 },
             { name: "Lexus RC F GT3", capacity: 120, factor: 1.06, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
-            { name: "McLaren 720S EVO", capacity: 120, factor: 0.97, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
+            { name: "McLaren 720S EVO", capacity: 120, factor: 0.95, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
             { name: "Mercedes-AMG EVO", capacity: 120, factor: 1.04, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "3", rakeSens: false, baseFRH: 54 },
             { name: "Nissan GT-R 2018", capacity: 120, factor: 1.07, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
             { name: "Porsche 991 GT3 R", capacity: 120, factor: 0.95, enginePos: "Rear", stability: "Low", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
-            { name: "Porsche 992 GT3 R", capacity: 120, factor: 0.94, enginePos: "Rear", stability: "Low", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50 }
+            { name: "Porsche 992 GT3 R", capacity: 120, factor: 0.93, enginePos: "Rear", stability: "Low", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50 }
         ];
 
-        const COOKIE_NAME = 'acc_strategy_settings_v8';
+        const COOKIE_NAME = 'acc_strategy_settings_v9';
         let saveTimeout;
 
         const trackSelect = document.getElementById('track');
@@ -273,7 +275,7 @@
                 text: `Set wing to <strong>${track.wing}</strong>. Balancing top speed against track aero load.`
             });
 
-            // 2. Rake & Ride Height (Now car-specific)
+            // 2. Rake & Ride Height
             const diff = track.rakeDiff;
             const refFront = car.baseFRH; 
             const refRear = refFront + diff;
@@ -319,7 +321,7 @@
             const lapTime = parseLapTime(avgLapTimeInput.value);
             const fuelPerLap = parseFloat(fuelPerLapInput.value);
             const durationSecs = parseDuration(raceDurationInput.value);
-            const maxStintMins = parseFloat(maxStintTimeInput.value);
+            const maxStintTimeInputVal = parseFloat(maxStintTimeInput.value);
             const userPits = parseInt(pitStopsInput.value);
             const safetyLaps = parseFloat(safetyLapsInput.value) || 0;
             
@@ -328,7 +330,7 @@
             const totalLaps = Math.ceil(durationSecs / lapTime);
             const totalFuel = (totalLaps + safetyLaps) * fuelPerLap;
             const durationMins = durationSecs / 60;
-            const requiredStints = Math.ceil(durationMins / maxStintTimeInput.value);
+            const requiredStints = Math.ceil(durationMins / maxStintTimeInputVal);
             const finalPits = Math.max(userPits, requiredStints - 1);
             const stints = finalPits + 1;
 
@@ -353,7 +355,7 @@
                 let notes = [];
                 const mins = (stintLaps * lapTime) / 60;
                 if (!isLast) {
-                    if (mins > maxStintMins) notes.push('<span class="warning">CRITICAL: Exceeds Max Stint!</span>');
+                    if (mins > maxStintTimeInputVal) notes.push('<span class="warning">CRITICAL: Exceeds Max Stint!</span>');
                     if (!tiresRequiredCheckbox.checked && mins > 60) notes.push('<span class="recommendation">Tire wear critical.</span>');
                 }
 
