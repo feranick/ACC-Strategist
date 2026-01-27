@@ -65,6 +65,7 @@
             <div class="lg:col-span-2 card p-6 rounded-xl shadow-2xl">
                 <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Race Inputs</h2>
 
+                <!-- Row 1 -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div class="input-group">
                         <label for="track" class="block text-sm font-medium mb-1 text-gray-400">Track</label>
@@ -83,6 +84,7 @@
                     </div>
                 </div>
 
+                <!-- Row 2 -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                     <div class="input-group">
                         <label for="avgLapTime" class="block text-sm font-medium mb-1 text-gray-400">Avg Lap Time (M:SS.000)</label>
@@ -98,18 +100,27 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 border-t border-gray-700 pt-6">
+                <!-- Row 3: Added Aggressiveness Dropdown -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 border-t border-gray-700 pt-6">
                     <div class="input-group">
-                        <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint Time (min)</label>
+                        <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint (min)</label>
                         <input type="number" id="maxStintTime" class="w-full p-2 rounded-lg" value="65" oninput="debounceSave()">
                     </div>
                     <div class="input-group">
-                        <label for="pitStops" class="block text-sm font-medium mb-1 text-gray-400">Desired Pit Stops</label>
+                        <label for="pitStops" class="block text-sm font-medium mb-1 text-gray-400">Pit Stops</label>
                         <input type="number" id="pitStops" class="w-full p-2 rounded-lg" value="1" oninput="debounceSave()">
                     </div>
                     <div class="input-group">
-                        <label for="safetyLaps" class="block text-sm font-medium mb-1 text-gray-400">Fuel Safety Laps</label>
+                        <label for="safetyLaps" class="block text-sm font-medium mb-1 text-gray-400">Safety Laps</label>
                         <input type="number" id="safetyLaps" class="w-full p-2 rounded-lg" value="2" step="0.5" oninput="debounceSave()">
+                    </div>
+                    <div class="input-group">
+                        <label for="rakeAggressiveness" class="block text-sm font-medium mb-1 text-gray-400">Setup Aggressiveness</label>
+                        <select id="rakeAggressiveness" class="w-full p-2 rounded-lg" onchange="debounceSave()">
+                            <option value="standard">Standard (Safe)</option>
+                            <option value="moderate">Moderate (+5mm)</option>
+                            <option value="aggressive">Aggressive (+10mm)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -157,10 +168,8 @@
     </div>
 
     <script>
-        // Use Calendar Versioning (CalVer): YYYY.MM.DD.Revision
-        const APP_VERSION = '2026.01.26.2';
+        const APP_VERSION = '2026.01.26.6';
 
-        // Track data overhaul - Adjusted baseFuel for modern ACC (1.9+)
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
             { name: "Brands Hatch", lapTimeSeconds: 85, baseFuel: 2.3, aero: "High", curbs: "High", brakeWear: 1, rakeDiff: 25, wing: "10-12" },
@@ -187,29 +196,28 @@
             { name: "Zolder", lapTimeSeconds: 90, baseFuel: 2.5, aero: "Med", curbs: "Extreme", brakeWear: 3, rakeDiff: 20, wing: "5-7" }
         ];
 
-        // Car data overhaul - Efficiency factors refined (0.93 - 1.10)
         const CAR_DATA = [
-            { name: "Aston Martin V8 Vantage", capacity: 120, factor: 1.0, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
-            { name: "Audi R8 LMS EVO II", capacity: 120, factor: 1.02, enginePos: "Mid", stability: "Low", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54 },
-            { name: "Bentley Continental", capacity: 120, factor: 1.08, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60 },
-            { name: "BMW M4 GT3", capacity: 120, factor: 0.94, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
-            { name: "BMW M6 GT3", capacity: 120, factor: 1.05, enginePos: "Front", stability: "Med", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60 },
-            { name: "Ferrari 296 GT3", capacity: 120, factor: 0.96, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 52 },
-            { name: "Ferrari 488 EVO", capacity: 120, factor: 1.0, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53 },
-            { name: "Ford Mustang GT3", capacity: 120, factor: 1.1, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
-            { name: "Generic GT4 Car", capacity: 100, factor: 0.7, enginePos: "Mid", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 70 },
-            { name: "Honda NSX EVO", capacity: 120, factor: 0.96, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54 },
-            { name: "Jaguar G3", capacity: 120, factor: 1.05, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
-            { name: "Lamborghini Huracán EVO 2", capacity: 120, factor: 1.03, enginePos: "Mid", stability: "Low", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53 },
-            { name: "Lexus RC F GT3", capacity: 120, factor: 1.06, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
-            { name: "McLaren 720S EVO", capacity: 120, factor: 0.95, enginePos: "Mid", stability: "Med", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
-            { name: "Mercedes-AMG EVO", capacity: 120, factor: 1.04, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "3", rakeSens: false, baseFRH: 54 },
-            { name: "Nissan GT-R 2018", capacity: 120, factor: 1.07, enginePos: "Front", stability: "High", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
-            { name: "Porsche 991 GT3 R", capacity: 120, factor: 0.95, enginePos: "Rear", stability: "Low", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
-            { name: "Porsche 992 GT3 R", capacity: 120, factor: 0.93, enginePos: "Rear", stability: "Low", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50 }
+            { name: "Aston Martin V8 Vantage", capacity: 120, factor: 1.0, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
+            { name: "Audi R8 LMS EVO II", capacity: 120, factor: 1.02, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54 },
+            { name: "Bentley Continental", capacity: 120, factor: 1.08, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60 },
+            { name: "BMW M4 GT3", capacity: 120, factor: 0.94, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
+            { name: "BMW M6 GT3", capacity: 120, factor: 1.05, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60 },
+            { name: "Ferrari 296 GT3", capacity: 120, factor: 0.96, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 52 },
+            { name: "Ferrari 488 EVO", capacity: 120, factor: 1.0, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53 },
+            { name: "Ford Mustang GT3", capacity: 120, factor: 1.1, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
+            { name: "Generic GT4 Car", capacity: 100, factor: 0.7, enginePos: "Mid", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 70 },
+            { name: "Honda NSX EVO", capacity: 120, factor: 0.96, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54 },
+            { name: "Jaguar G3", capacity: 120, factor: 1.05, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
+            { name: "Lamborghini Huracán EVO 2", capacity: 120, factor: 1.03, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53 },
+            { name: "Lexus RC F GT3", capacity: 120, factor: 1.06, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58 },
+            { name: "McLaren 720S EVO", capacity: 120, factor: 0.95, enginePos: "Mid", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
+            { name: "Mercedes-AMG EVO", capacity: 120, factor: 1.04, enginePos: "Front", mapRace: "1", mapFuel: "3", rakeSens: false, baseFRH: 54 },
+            { name: "Nissan GT-R 2018", capacity: 120, factor: 1.07, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56 },
+            { name: "Porsche 991 GT3 R", capacity: 120, factor: 0.95, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52 },
+            { name: "Porsche 992 GT3 R", capacity: 120, factor: 0.93, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50 }
         ];
 
-        const COOKIE_NAME = 'acc_strategy_settings_v9';
+        const COOKIE_NAME = 'acc_strategy_settings_v10';
         let saveTimeout;
 
         const trackSelect = document.getElementById('track');
@@ -221,6 +229,7 @@
         const maxStintTimeInput = document.getElementById('maxStintTime');
         const pitStopsInput = document.getElementById('pitStops');
         const safetyLapsInput = document.getElementById('safetyLaps');
+        const rakeAggressivenessSelect = document.getElementById('rakeAggressiveness');
         const refuelRequiredCheckbox = document.getElementById('refuelRequired');
         const tiresRequiredCheckbox = document.getElementById('tiresRequired');
         const driverSwapRequiredCheckbox = document.getElementById('driverSwapRequired');
@@ -245,6 +254,7 @@
                     avgLapTime: avgLapTimeInput.value, fuelPerLap: fuelPerLapInput.value,
                     raceDuration: raceDurationInput.value, maxStintTime: maxStintTimeInput.value,
                     pitStops: pitStopsInput.value, safetyLaps: safetyLapsInput.value,
+                    rakeAggro: rakeAggressivenessSelect.value,
                     refuel: refuelRequiredCheckbox.checked, tires: tiresRequiredCheckbox.checked, 
                     swap: driverSwapRequiredCheckbox.checked
                 };
@@ -276,29 +286,46 @@
 
         function generateSetupAdvice(track, car, durationMins) {
             const advice = [];
+            const aggro = rakeAggressivenessSelect.value;
             
+            // Rake Modifier
+            let rakeMod = 0;
+            if (aggro === 'moderate') rakeMod = 5;
+            if (aggro === 'aggressive') rakeMod = 10;
+
             // 1. Aerodynamics & Wing
             advice.push({
                 title: "Rear Wing",
                 text: `Set wing to <strong>${track.wing}</strong>. Balancing top speed against track aero load.`
             });
 
-            // 2. Rake & Ride Height
-            const diff = track.rakeDiff;
+            // 2. Ride Heights
+            const diff = track.rakeDiff + rakeMod;
             const refFront = car.baseFRH; 
             const refRear = refFront + diff;
-            let rakeAdvice = `Target <strong>+${diff}mm</strong> rake profile.`;
-            if (car.rakeSens) rakeAdvice += " Car is rake-sensitive; avoid aero stall.";
-            advice.push({ title: "Rake Profile", text: `${rakeAdvice}<br><span class="text-[10px] text-gray-500 font-mono">Ref: ${refFront}mm F / ${refRear}mm R</span>` });
+            let rakeAdvice = `Front: <strong>${refFront}mm</strong><br>Rear: <strong>${refRear}mm</strong>`;
+            if (car.rakeSens) rakeAdvice += "<br><span class='text-red-400 uppercase text-[9px] font-bold'>Rake Sensitive Floor</span>";
+            advice.push({ title: "Ride Heights", text: `${rakeAdvice}<br><span class="text-[10px] text-gray-500 font-mono">(Total Rake: +${diff}mm)</span>` });
 
-            // 3. Suspension
-            let suspension = "Standard springs.";
-            if (track.curbs === "Extreme" || track.curbs === "Very High") {
-                suspension = car.enginePos === "Mid" ? "Soften front springs to avoid bouncing." : "Soften bumpstops for curb jumping.";
-            } else if (track.curbs === "Low") {
-                suspension = "Stiffen suspension for aero stability.";
+            // 3. Bumpstops (Aggressiveness Adjusted)
+            let bsr = "10-15"; 
+            let bst = "800-1000"; 
+            
+            if (aggro === 'aggressive') {
+                bsr = "2-6";
+                bst = "1500-2000";
+            } else if (aggro === 'moderate') {
+                bsr = "6-12";
+                bst = "1200-1500";
+            } else if (track.curbs === "Extreme" || track.curbs === "Very High") {
+                bsr = "25-35"; 
+                bst = "300-500";
             }
-            advice.push({ title: "Suspension", text: suspension });
+
+            advice.push({ 
+                title: "Bumpstops", 
+                text: `Front Range: <strong>${bsr}</strong><br>Front Rate: <strong>${bst} N/m</strong><br><span class="text-[10px] text-gray-500">Protection for ${aggro} rake</span>` 
+            });
 
             // 4. Brakes
             let pad = durationMins > 90 ? "Pad 2" : "Pad 1";
@@ -312,15 +339,17 @@
             advice.push({ title: "Engine Map", text: `Use <strong>Map ${mapNum}</strong> for this session.` });
 
             // 6. Car Handling
-            let handling = "Balanced approach.";
+            let handling = "Standard.";
             if (car.enginePos === "Rear") handling = "Manage rear tire temps on exit.";
-            else if (car.enginePos === "Front") handling = "Watch for front understeer graining.";
+            else if (car.enginePos === "Front") handling = "Watch for front turn-in graining.";
             advice.push({ title: "Balance", text: handling });
 
             setupAdviceElement.innerHTML = advice.map(a => `
-                <div class="p-3 rounded bg-gray-900 border border-gray-700">
-                    <h4 class="text-blue-400 font-bold mb-1">${a.title}</h4>
-                    <p class="text-gray-400 leading-tight">${a.text}</p>
+                <div class="p-3 rounded bg-gray-900 border border-gray-700 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-blue-400 font-bold mb-1 text-xs uppercase tracking-wider">${a.title}</h4>
+                        <p class="text-gray-400 leading-tight">${a.text}</p>
+                    </div>
                 </div>
             `).join('');
         }
@@ -329,7 +358,7 @@
             const lapTime = parseLapTime(avgLapTimeInput.value);
             const fuelPerLap = parseFloat(fuelPerLapInput.value);
             const durationSecs = parseDuration(raceDurationInput.value);
-            const maxStintTimeInputVal = parseFloat(maxStintTimeInput.value);
+            const maxStintTimeVal = parseFloat(maxStintTimeInput.value);
             const userPits = parseInt(pitStopsInput.value);
             const safetyLaps = parseFloat(safetyLapsInput.value) || 0;
             
@@ -338,7 +367,7 @@
             const totalLaps = Math.ceil(durationSecs / lapTime);
             const totalFuel = (totalLaps + safetyLaps) * fuelPerLap;
             const durationMins = durationSecs / 60;
-            const requiredStints = Math.ceil(durationMins / maxStintTimeInputVal);
+            const requiredStints = Math.ceil(durationMins / maxStintTimeVal);
             const finalPits = Math.max(userPits, requiredStints - 1);
             const stints = finalPits + 1;
 
@@ -363,16 +392,16 @@
                 let notes = [];
                 const mins = (stintLaps * lapTime) / 60;
                 if (!isLast) {
-                    if (mins > maxStintTimeInputVal) notes.push('<span class="warning">CRITICAL: Exceeds Max Stint!</span>');
-                    if (!tiresRequiredCheckbox.checked && mins > 60) notes.push('<span class="recommendation">Tire wear critical.</span>');
+                    if (mins > maxStintTimeVal) notes.push('<span class="warning text-[10px]">CRITICAL: Exceeds Max Stint!</span>');
+                    if (!tiresRequiredCheckbox.checked && mins > 60) notes.push('<span class="recommendation text-[10px]">Tire wear critical.</span>');
                 }
 
                 stintDetailsElement.innerHTML += `
                     <div class="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
                         <p class="font-bold text-yellow-300">Stint ${i+1} (${stintLaps} Laps)</p>
-                        <p>Load: <span class="font-mono">${stintFuel.toFixed(1)} L</span></p>
-                        <p class="text-xs text-gray-500">${isLast ? 'Finish' : 'Pit Lap ' + (currentLap + stintLaps)}</p>
-                        <div class="mt-1">${notes.join('')}</div>
+                        <p>Load: <span class="font-mono text-blue-300">${stintFuel.toFixed(1)} L</span></p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-tighter">${isLast ? 'Finish' : 'Pit Lap ' + (currentLap + stintLaps)}</p>
+                        <div class="mt-1 flex flex-col">${notes.join('')}</div>
                     </div>
                 `;
                 currentFuelLoaded += stintFuel;
@@ -381,13 +410,11 @@
             
             const msg = document.getElementById('message');
             msg.classList.toggle('hidden', finalPits <= userPits);
-            if (finalPits > userPits) msg.textContent = `Strategy forced to ${finalPits} stops for stint rules.`;
+            if (finalPits > userPits) msg.textContent = `Strategy adjusted to ${finalPits} stops for stint rules.`;
         }
 
         window.onload = () => {
-            // Inject Version
             document.getElementById('footer-version').textContent = 'v' + APP_VERSION;
-
             TRACK_DATA.sort((a, b) => a.name.localeCompare(b.name)).forEach(t => trackSelect.add(new Option(t.name, t.name)));
             CAR_DATA.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => carSelect.add(new Option(c.name, c.name)));
             
@@ -399,6 +426,7 @@
                     avgLapTimeInput.value = s.avgLapTime; fuelPerLapInput.value = s.fuelPerLap;
                     raceDurationInput.value = s.raceDuration; maxStintTimeInput.value = s.maxStintTime;
                     pitStopsInput.value = s.pitStops; safetyLapsInput.value = s.safetyLaps;
+                    rakeAggressivenessSelect.value = s.rakeAggro || 'standard';
                     refuelRequiredCheckbox.checked = s.refuel; tiresRequiredCheckbox.checked = s.tires; 
                     driverSwapRequiredCheckbox.checked = s.swap;
                 } catch(e) {}
