@@ -100,7 +100,7 @@
                     </div>
                 </div>
                 
-                <!-- Row 3: Added Aggressiveness Dropdown -->
+                <!-- Row 3 -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 border-t border-gray-700 pt-6">
                     <div class="input-group">
                         <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint (min)</label>
@@ -168,7 +168,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '2026.01.26.6';
+        const APP_VERSION = '2026.01.26.7';
 
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
@@ -288,15 +288,23 @@
             const advice = [];
             const aggro = rakeAggressivenessSelect.value;
             
-            // Rake Modifier
+            // Rake & Wing Modifier
             let rakeMod = 0;
-            if (aggro === 'moderate') rakeMod = 5;
-            if (aggro === 'aggressive') rakeMod = 10;
+            let wingMod = 0;
+            if (aggro === 'moderate') {
+                rakeMod = 5;
+                wingMod = 1;
+            }
+            if (aggro === 'aggressive') {
+                rakeMod = 10;
+                wingMod = 2;
+            }
 
-            // 1. Aerodynamics & Wing
+            // 1. Aerodynamics & Wing (Updated with aggressive balance instruction)
+            const baseWing = track.wing;
             advice.push({
                 title: "Rear Wing",
-                text: `Set wing to <strong>${track.wing}</strong>. Balancing top speed against track aero load.`
+                text: `Base: <strong>${baseWing}</strong>. ${wingMod > 0 ? `Adjust <strong>+${wingMod}</strong> click(s) to balance the ${aggro} rake.` : 'Standard track setting.'}`
             });
 
             // 2. Ride Heights
@@ -307,24 +315,16 @@
             if (car.rakeSens) rakeAdvice += "<br><span class='text-red-400 uppercase text-[9px] font-bold'>Rake Sensitive Floor</span>";
             advice.push({ title: "Ride Heights", text: `${rakeAdvice}<br><span class="text-[10px] text-gray-500 font-mono">(Total Rake: +${diff}mm)</span>` });
 
-            // 3. Bumpstops (Aggressiveness Adjusted)
+            // 3. Bumpstops
             let bsr = "10-15"; 
             let bst = "800-1000"; 
-            
-            if (aggro === 'aggressive') {
-                bsr = "2-6";
-                bst = "1500-2000";
-            } else if (aggro === 'moderate') {
-                bsr = "6-12";
-                bst = "1200-1500";
-            } else if (track.curbs === "Extreme" || track.curbs === "Very High") {
-                bsr = "25-35"; 
-                bst = "300-500";
-            }
+            if (aggro === 'aggressive') { bsr = "2-6"; bst = "1500-2000"; }
+            else if (aggro === 'moderate') { bsr = "6-12"; bst = "1200-1500"; }
+            else if (track.curbs === "Extreme" || track.curbs === "Very High") { bsr = "25-35"; bst = "300-500"; }
 
             advice.push({ 
                 title: "Bumpstops", 
-                text: `Front Range: <strong>${bsr}</strong><br>Front Rate: <strong>${bst} N/m</strong><br><span class="text-[10px] text-gray-500">Protection for ${aggro} rake</span>` 
+                text: `Front Range: <strong>${bsr}</strong><br>Front Rate: <strong>${bst} N/m</strong><br><span class="text-[10px] text-gray-500">Stability for ${aggro} rake</span>` 
             });
 
             // 4. Brakes
@@ -339,9 +339,9 @@
             advice.push({ title: "Engine Map", text: `Use <strong>Map ${mapNum}</strong> for this session.` });
 
             // 6. Car Handling
-            let handling = "Standard.";
-            if (car.enginePos === "Rear") handling = "Manage rear tire temps on exit.";
-            else if (car.enginePos === "Front") handling = "Watch for front turn-in graining.";
+            let handling = "Standard balance.";
+            if (car.enginePos === "Rear") handling = "Manage rear tire temps on corner exit.";
+            else if (car.enginePos === "Front") handling = "Avoid excessive trail braking.";
             advice.push({ title: "Balance", text: handling });
 
             setupAdviceElement.innerHTML = advice.map(a => `
