@@ -177,7 +177,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '2026.03.22.2';
+        const APP_VERSION = '2026.03.23.1';
 
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
@@ -206,29 +206,29 @@
             { name: "Zolder", lapTimeSeconds: 90, baseFuel: 2.5, aero: "Med", curbs: "Extreme", brakeWear: 3, rakeDiff: 20, wing: "5-7" }
         ];
 
-        // Car data with Baseline Electronics (Esports/Alien specs)
+        // Added back fuel tank capacities specific to ACC 1.9+ cars
         const CAR_DATA = [
-            { name: "Aston Martin V8 Vantage", factor: 1.0, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
-            { name: "Audi R8 LMS EVO II", factor: 1.02, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
-            { name: "Bentley Continental", factor: 1.08, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
-            { name: "BMW M4 GT3", factor: 0.94, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58, elec: { tc: 3, tc2: 1, abs: 3, hasTC2: true } },
-            { name: "BMW M6 GT3", factor: 1.05, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60, elec: { tc: 3, tc2: 1, abs: 3, hasTC2: true } },
-            { name: "Ferrari 296 GT3", factor: 0.96, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 52, elec: { tc: 2, tc2: 0, abs: 2, hasTC2: true } },
-            { name: "Ferrari 488 EVO", factor: 1.0, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53, elec: { tc: 2, tc2: 0, abs: 2, hasTC2: true } },
-            { name: "Ford Mustang GT3", factor: 1.1, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
-            { name: "Generic GT4 Car", factor: 0.7, enginePos: "Mid", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 70, elec: { tc: 4, tc2: null, abs: 4, hasTC2: false } },
-            { name: "Honda NSX EVO", factor: 0.96, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
-            { name: "Jaguar G3", factor: 1.05, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 4, tc2: null, abs: 4, hasTC2: false } },
-            { name: "Lamborghini Huracán EVO 2", factor: 1.03, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
-            { name: "Lexus RC F GT3", factor: 1.06, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
-            { name: "McLaren 720S EVO", factor: 0.95, enginePos: "Mid", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52, elec: { tc: 2, tc2: null, abs: 2, hasTC2: false } },
-            { name: "Mercedes-AMG EVO", factor: 1.04, enginePos: "Front", mapRace: "1", mapFuel: "3", rakeSens: false, baseFRH: 54, elec: { tc: 3, tc2: null, abs: 2, hasTC2: false } },
-            { name: "Nissan GT-R 2018", factor: 1.07, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
-            { name: "Porsche 991 GT3 R", factor: 0.95, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52, elec: { tc: 4, tc2: null, abs: 3, hasTC2: false } },
-            { name: "Porsche 992 GT3 R", factor: 0.93, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50, elec: { tc: 4, tc2: null, abs: 3, hasTC2: false } }
+            { name: "Aston Martin V8 Vantage", factor: 1.0, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
+            { name: "Audi R8 LMS EVO II", factor: 1.02, capacity: 120, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
+            { name: "Bentley Continental", factor: 1.08, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
+            { name: "BMW M4 GT3", factor: 0.94, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58, elec: { tc: 3, tc2: 1, abs: 3, hasTC2: true } },
+            { name: "BMW M6 GT3", factor: 1.05, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 60, elec: { tc: 3, tc2: 1, abs: 3, hasTC2: true } },
+            { name: "Ferrari 296 GT3", factor: 0.96, capacity: 110, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 52, elec: { tc: 2, tc2: 0, abs: 2, hasTC2: true } },
+            { name: "Ferrari 488 EVO", factor: 1.0, capacity: 110, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53, elec: { tc: 2, tc2: 0, abs: 2, hasTC2: true } },
+            { name: "Ford Mustang GT3", factor: 1.1, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
+            { name: "Generic GT4 Car", factor: 0.7, capacity: 115, enginePos: "Mid", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 70, elec: { tc: 4, tc2: null, abs: 4, hasTC2: false } },
+            { name: "Honda NSX EVO", factor: 0.96, capacity: 120, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
+            { name: "Jaguar G3", factor: 1.05, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 4, tc2: null, abs: 4, hasTC2: false } },
+            { name: "Lamborghini Huracán EVO 2", factor: 1.03, capacity: 120, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 53, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
+            { name: "Lexus RC F GT3", factor: 1.06, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 58, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
+            { name: "McLaren 720S EVO", factor: 0.95, capacity: 110, enginePos: "Mid", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52, elec: { tc: 2, tc2: null, abs: 2, hasTC2: false } },
+            { name: "Mercedes-AMG EVO", factor: 1.04, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "3", rakeSens: false, baseFRH: 54, elec: { tc: 3, tc2: null, abs: 2, hasTC2: false } },
+            { name: "Nissan GT-R 2018", factor: 1.07, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
+            { name: "Porsche 991 GT3 R", factor: 0.95, capacity: 120, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 52, elec: { tc: 4, tc2: null, abs: 3, hasTC2: false } },
+            { name: "Porsche 992 GT3 R", factor: 0.93, capacity: 120, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50, elec: { tc: 4, tc2: null, abs: 3, hasTC2: false } }
         ];
 
-        const COOKIE_NAME = 'acc_strategy_settings_v14';
+        const COOKIE_NAME = 'acc_strategy_settings_v15';
         let saveTimeout;
 
         const trackSelect = document.getElementById('track');
@@ -442,25 +442,40 @@
             const fuelPerLap = parseFloat(fuelPerLapInput.value);
             const durationSecs = parseDuration(raceDurationInput.value);
             const maxStintTimeVal = parseFloat(maxStintTimeInput.value);
-            let originalUserPits = parseInt(pitStopsInput.value) || 0;
+            const userPits = parseInt(pitStopsInput.value) || 0;
             const safetyLaps = parseFloat(safetyLapsInput.value) || 0;
             
             if (!lapTime || !fuelPerLap || !durationSecs) return;
+
+            const track = TRACK_DATA.find(t => t.name === trackSelect.value);
+            const car = CAR_DATA.find(c => c.name === carSelect.value);
 
             const totalLaps = Math.ceil(durationSecs / lapTime);
             const totalFuel = (totalLaps + safetyLaps) * fuelPerLap;
             const durationMins = durationSecs / 60;
             
-            const requiredStints = Math.ceil(durationMins / maxStintTimeVal);
+            // Fuel and Time Constraints for Minimum Required Pits
+            const maxFuelStints = Math.ceil(totalFuel / car.capacity);
+            const maxTimeStints = Math.ceil(durationMins / maxStintTimeVal);
+            
+            const requiredStints = Math.max(maxFuelStints, maxTimeStints);
             const minPitsRequired = Math.max(0, requiredStints - 1);
             
+            let finalPits = userPits;
+            let forcedReason = "";
+            
             // Auto-adjust pit stops if the required minimum is greater than user input
-            if (originalUserPits < minPitsRequired) {
-                originalUserPits = minPitsRequired;
-                pitStopsInput.value = originalUserPits;
+            if (userPits < minPitsRequired) {
+                finalPits = minPitsRequired;
+                pitStopsInput.value = finalPits; // Update UI to reflect safe minimum
+                
+                if (maxFuelStints > maxTimeStints) {
+                    forcedReason = `fuel tank capacity (${car.capacity}L limit)`;
+                } else {
+                    forcedReason = `maximum stint rules (${maxStintTimeVal} min limit)`;
+                }
             }
             
-            const finalPits = Math.max(originalUserPits, minPitsRequired);
             const stints = finalPits + 1;
 
             document.getElementById('totalLaps').textContent = totalLaps;
@@ -468,8 +483,6 @@
             document.getElementById('calculatedPits').textContent = finalPits;
             document.getElementById('strategyType').textContent = fuelStrategySelect.value === 'equal' ? 'Equal' : 'Minimal';
 
-            const track = TRACK_DATA.find(t => t.name === trackSelect.value);
-            const car = CAR_DATA.find(c => c.name === carSelect.value);
             generateSetupAdvice(track, car, durationMins);
 
             stintDetailsElement.innerHTML = '';
@@ -483,6 +496,12 @@
 
                 let notes = [];
                 const mins = (stintLaps * lapTime) / 60;
+                
+                // Add extreme warning if a single stint mathematically requires more fuel than the tank holds
+                if (stintFuel > car.capacity) {
+                    notes.push(`<span class="warning text-[10px]">CRITICAL: Exceeds ${car.capacity}L Tank Capacity!</span>`);
+                }
+
                 if (!isLast) {
                     if (mins > maxStintTimeVal) notes.push('<span class="warning text-[10px]">CRITICAL: Exceeds Max Stint!</span>');
                     if (!tiresRequiredCheckbox.checked && mins > 60) notes.push('<span class="recommendation text-[10px]">Tire wear critical.</span>');
@@ -500,13 +519,14 @@
                 currentLap += stintLaps;
             }
             
+            // Show warning message if system auto-corrected user's pit entry
             const msg = document.getElementById('message');
-            msg.classList.toggle('hidden', finalPits <= parseInt(pitStopsInput.dataset.originalValue || "0"));
-            if (finalPits > parseInt(pitStopsInput.dataset.originalValue || "0")) {
-                msg.textContent = `Pit stops automatically increased to ${finalPits} to meet maximum stint rules.`;
+            if (userPits < minPitsRequired) {
+                msg.textContent = `Pit stops automatically increased to ${finalPits} due to ${forcedReason}.`;
+                msg.classList.remove('hidden');
+            } else {
+                msg.classList.add('hidden');
             }
-            // Update tracking value
-            pitStopsInput.dataset.originalValue = finalPits;
         }
 
         window.onload = () => {
