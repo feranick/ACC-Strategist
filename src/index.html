@@ -1,15 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="icon" type="image/x-icon" href="./favicon.ico">
-    <link rel="icon" href="./icon.png">
-    <link rel="apple-touch-icon" href="./icon192.png">
-    <link rel="manifest" href="./manifest.json">
-    
-    <title>ACC Strategist</title>
+<title>ACC Strategist</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
@@ -177,7 +166,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '2026.03.22.1';
+        const APP_VERSION = '2026.03.22.2';
 
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
@@ -442,7 +431,7 @@
             const fuelPerLap = parseFloat(fuelPerLapInput.value);
             const durationSecs = parseDuration(raceDurationInput.value);
             const maxStintTimeVal = parseFloat(maxStintTimeInput.value);
-            const userPits = parseInt(pitStopsInput.value);
+            let originalUserPits = parseInt(pitStopsInput.value) || 0;
             const safetyLaps = parseFloat(safetyLapsInput.value) || 0;
             
             if (!lapTime || !fuelPerLap || !durationSecs) return;
@@ -450,8 +439,17 @@
             const totalLaps = Math.ceil(durationSecs / lapTime);
             const totalFuel = (totalLaps + safetyLaps) * fuelPerLap;
             const durationMins = durationSecs / 60;
+            
             const requiredStints = Math.ceil(durationMins / maxStintTimeVal);
-            const finalPits = Math.max(userPits, requiredStints - 1);
+            const minPitsRequired = Math.max(0, requiredStints - 1);
+            
+            // Auto-adjust pit stops if the required minimum is greater than user input
+            if (originalUserPits < minPitsRequired) {
+                originalUserPits = minPitsRequired;
+                pitStopsInput.value = originalUserPits;
+            }
+            
+            const finalPits = Math.max(originalUserPits, minPitsRequired);
             const stints = finalPits + 1;
 
             document.getElementById('totalLaps').textContent = totalLaps;
@@ -492,8 +490,12 @@
             }
             
             const msg = document.getElementById('message');
-            msg.classList.toggle('hidden', finalPits <= userPits);
-            if (finalPits > userPits) msg.textContent = `Strategy adjusted to ${finalPits} stops for stint rules.`;
+            msg.classList.toggle('hidden', finalPits <= parseInt(pitStopsInput.dataset.originalValue || "0"));
+            if (finalPits > parseInt(pitStopsInput.dataset.originalValue || "0")) {
+                msg.textContent = `Pit stops automatically increased to ${finalPits} to meet maximum stint rules.`;
+            }
+            // Update tracking value
+            pitStopsInput.dataset.originalValue = finalPits;
         }
 
         window.onload = () => {
