@@ -177,7 +177,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '2026.03.23.1';
+        const APP_VERSION = '2026.03.23.2';
 
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
@@ -206,7 +206,6 @@
             { name: "Zolder", lapTimeSeconds: 90, baseFuel: 2.5, aero: "Med", curbs: "Extreme", brakeWear: 3, rakeDiff: 20, wing: "5-7" }
         ];
 
-        // Added back fuel tank capacities specific to ACC 1.9+ cars
         const CAR_DATA = [
             { name: "Aston Martin V8 Vantage", factor: 1.0, capacity: 120, enginePos: "Front", mapRace: "1", mapFuel: "2", rakeSens: false, baseFRH: 56, elec: { tc: 3, tc2: 2, abs: 3, hasTC2: true } },
             { name: "Audi R8 LMS EVO II", factor: 1.02, capacity: 120, enginePos: "Mid", mapRace: "1", mapFuel: "3", rakeSens: true, baseFRH: 54, elec: { tc: 3, tc2: null, abs: 3, hasTC2: false } },
@@ -442,7 +441,7 @@
             const fuelPerLap = parseFloat(fuelPerLapInput.value);
             const durationSecs = parseDuration(raceDurationInput.value);
             const maxStintTimeVal = parseFloat(maxStintTimeInput.value);
-            const userPits = parseInt(pitStopsInput.value) || 0;
+            let originalUserPits = parseInt(pitStopsInput.value) || 0;
             const safetyLaps = parseFloat(safetyLapsInput.value) || 0;
             
             if (!lapTime || !fuelPerLap || !durationSecs) return;
@@ -454,23 +453,39 @@
             const totalFuel = (totalLaps + safetyLaps) * fuelPerLap;
             const durationMins = durationSecs / 60;
             
-            // Fuel and Time Constraints for Minimum Required Pits
-            const maxFuelStints = Math.ceil(totalFuel / car.capacity);
-            const maxTimeStints = Math.ceil(durationMins / maxStintTimeVal);
+            // --- NEW ROBUST CONSTRAINT LOGIC ---
+            // 1. Max laps we can do on a single full tank
+            const maxLapsPerFuelStint = Math.floor(car.capacity / fuelPerLap);
             
-            const requiredStints = Math.max(maxFuelStints, maxTimeStints);
+            if (maxLapsPerFuelStint <= 0) {
+                const msg = document.getElementById('message');
+                msg.textContent = `CRITICAL ERROR: Fuel per lap (${fuelPerLap}L) exceeds car tank capacity (${car.capacity}L)!`;
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            // 2. Max laps we can do before stint timer expires
+            const maxLapsPerTimeStint = Math.floor((maxStintTimeVal * 60) / lapTime);
+            
+            // 3. The absolute physical limit of laps per stint
+            const maxLapsPerStint = Math.min(maxLapsPerFuelStint, maxLapsPerTimeStint);
+            
+            // Calculate minimum stints needed to complete the total laps PLUS safety laps 
+            const effectiveTotalLaps = totalLaps + safetyLaps;
+            const requiredStints = Math.ceil(effectiveTotalLaps / maxLapsPerStint);
             const minPitsRequired = Math.max(0, requiredStints - 1);
+            // -----------------------------------
             
-            let finalPits = userPits;
+            let finalPits = originalUserPits;
             let forcedReason = "";
             
             // Auto-adjust pit stops if the required minimum is greater than user input
-            if (userPits < minPitsRequired) {
+            if (originalUserPits < minPitsRequired) {
                 finalPits = minPitsRequired;
                 pitStopsInput.value = finalPits; // Update UI to reflect safe minimum
                 
-                if (maxFuelStints > maxTimeStints) {
-                    forcedReason = `fuel tank capacity (${car.capacity}L limit)`;
+                if (maxLapsPerFuelStint < maxLapsPerTimeStint) {
+                    forcedReason = `fuel tank capacity (${car.capacity}L limit vs ${fuelPerLap}L/lap)`;
                 } else {
                     forcedReason = `maximum stint rules (${maxStintTimeVal} min limit)`;
                 }
@@ -491,15 +506,30 @@
 
             for (let i = 0; i < stints; i++) {
                 const isLast = (i === stints - 1);
-                const stintLaps = isLast ? (totalLaps - currentLap) : Math.ceil(totalLaps / stints);
-                let stintFuel = fuelStrategySelect.value === 'equal' ? totalFuel / stints : (isLast ? (totalFuel - currentFuelLoaded) : (stintLaps * fuelPerLap));
+                
+                // Safe lap distribution using floor and modulo to prevent negative laps
+                const baseLaps = Math.floor(totalLaps / stints);
+                const extraLapsCount = totalLaps % stints;
+                const stintLaps = baseLaps + (i < extraLapsCount ? 1 : 0);
+
+                let stintFuel = 0;
+                if (fuelStrategySelect.value === 'equal') {
+                    stintFuel = totalFuel / stints;
+                } else {
+                    // Minimal strategy: Fuel exactly for these laps + proportional safety buffer
+                    stintFuel = (stintLaps + (safetyLaps / stints)) * fuelPerLap;
+                }
+                
+                // Fix rounding on the last stint to hit exact totalFuel target
+                if (isLast) {
+                    stintFuel = totalFuel - currentFuelLoaded;
+                }
 
                 let notes = [];
                 const mins = (stintLaps * lapTime) / 60;
                 
-                // Add extreme warning if a single stint mathematically requires more fuel than the tank holds
                 if (stintFuel > car.capacity) {
-                    notes.push(`<span class="warning text-[10px]">CRITICAL: Exceeds ${car.capacity}L Tank Capacity!</span>`);
+                    notes.push(`<span class="warning text-[10px]">CRITICAL: Exceeds ${car.capacity}L Tank!</span>`);
                 }
 
                 if (!isLast) {
@@ -521,7 +551,7 @@
             
             // Show warning message if system auto-corrected user's pit entry
             const msg = document.getElementById('message');
-            if (userPits < minPitsRequired) {
+            if (originalUserPits < minPitsRequired) {
                 msg.textContent = `Pit stops automatically increased to ${finalPits} due to ${forcedReason}.`;
                 msg.classList.remove('hidden');
             } else {
