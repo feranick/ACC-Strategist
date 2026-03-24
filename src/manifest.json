@@ -1,19 +1,28 @@
 {
-  "name": "ACC-Strategist",
-  "short_name": "ACC-Strategist",
-  "description": "Fuel & Tire Strategy for Assetto Corsa Competizione",
-  "start_url": ".",
-  "display": "standalone",
-  "icons": [
-    {
-      "src": "./icon.png",
-      "sizes": "64x64",
-      "type": "image/png"
-    },
-    {
-      "src": "./icon192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
-  ]
+    "name": "ACC Strategist",
+    "short_name": "ACC Strat",
+    "description": "Race Strategy & Setup Engineering Assistant for Assetto Corsa Competizione",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#0d1117",
+    "theme_color": "#58a6ff",
+    "icons": [
+        {
+            "src": "./icon.png",
+            "sizes": "64x64",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icon192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["games", "utilities"],
+    "lang": "en",
+    "dir": "ltr"
 }
