@@ -177,7 +177,7 @@
     </div>
 
     <script>
-        const APP_VERSION = '2026.03.23.2';
+        const APP_VERSION = '2026.03.24.2';
 
         const TRACK_DATA = [
             { name: "Barcelona", lapTimeSeconds: 105, baseFuel: 2.9, aero: "High", curbs: "Med", brakeWear: 2, rakeDiff: 25, wing: "9-11" },
@@ -227,7 +227,7 @@
             { name: "Porsche 992 GT3 R", factor: 0.93, capacity: 120, enginePos: "Rear", mapRace: "1", mapFuel: "2", rakeSens: true, baseFRH: 50, elec: { tc: 4, tc2: null, abs: 3, hasTC2: false } }
         ];
 
-        const COOKIE_NAME = 'acc_strategy_settings_v15';
+        const COOKIE_NAME = 'acc_strategy_settings_v16';
         let saveTimeout;
 
         const trackSelect = document.getElementById('track');
@@ -453,10 +453,9 @@
             const totalFuel = (totalLaps + safetyLaps) * fuelPerLap;
             const durationMins = durationSecs / 60;
             
-            // --- NEW ROBUST CONSTRAINT LOGIC ---
+            // --- STRICT CONSTRAINT LOGIC ---
             // 1. Max laps we can do on a single full tank
             const maxLapsPerFuelStint = Math.floor(car.capacity / fuelPerLap);
-            
             if (maxLapsPerFuelStint <= 0) {
                 const msg = document.getElementById('message');
                 msg.textContent = `CRITICAL ERROR: Fuel per lap (${fuelPerLap}L) exceeds car tank capacity (${car.capacity}L)!`;
@@ -467,28 +466,39 @@
             // 2. Max laps we can do before stint timer expires
             const maxLapsPerTimeStint = Math.floor((maxStintTimeVal * 60) / lapTime);
             
-            // 3. The absolute physical limit of laps per stint
+            // 3. Absolute physical limit of laps per stint
             const maxLapsPerStint = Math.min(maxLapsPerFuelStint, maxLapsPerTimeStint);
             
             // Calculate minimum stints needed to complete the total laps PLUS safety laps 
             const effectiveTotalLaps = totalLaps + safetyLaps;
             const requiredStints = Math.ceil(effectiveTotalLaps / maxLapsPerStint);
             const minPitsRequired = Math.max(0, requiredStints - 1);
+            
+            // 4. Determine sensible maximum pits (cannot pit more times than laps in race)
+            const absoluteMaxPits = Math.max(minPitsRequired, totalLaps - 1);
             // -----------------------------------
             
             let finalPits = originalUserPits;
-            let forcedReason = "";
+            let showMessage = false;
+            let warningText = "";
             
-            // Auto-adjust pit stops if the required minimum is greater than user input
+            // Force Correction Upward: Not enough pit stops to finish the race
             if (originalUserPits < minPitsRequired) {
                 finalPits = minPitsRequired;
-                pitStopsInput.value = finalPits; // Update UI to reflect safe minimum
-                
+                pitStopsInput.value = finalPits;
+                showMessage = true;
                 if (maxLapsPerFuelStint < maxLapsPerTimeStint) {
-                    forcedReason = `fuel tank capacity (${car.capacity}L limit vs ${fuelPerLap}L/lap)`;
+                    warningText = `Pit stops increased to ${finalPits} (Fuel tank limit: ${car.capacity}L).`;
                 } else {
-                    forcedReason = `maximum stint rules (${maxStintTimeVal} min limit)`;
+                    warningText = `Pit stops increased to ${finalPits} (Max stint time: ${maxStintTimeVal}m).`;
                 }
+            } 
+            // Force Correction Downward: User left a stale/crazy high number that exceeds race laps
+            else if (originalUserPits > absoluteMaxPits) {
+                finalPits = minPitsRequired; // Reset to the optimal standard
+                pitStopsInput.value = finalPits;
+                showMessage = true;
+                warningText = `Pit stops reset to ${finalPits} (Removed stale input from longer race duration).`;
             }
             
             const stints = finalPits + 1;
@@ -507,7 +517,7 @@
             for (let i = 0; i < stints; i++) {
                 const isLast = (i === stints - 1);
                 
-                // Safe lap distribution using floor and modulo to prevent negative laps
+                // Safe lap distribution using floor and modulo to mathematically guarantee no negative or 0-lap stints
                 const baseLaps = Math.floor(totalLaps / stints);
                 const extraLapsCount = totalLaps % stints;
                 const stintLaps = baseLaps + (i < extraLapsCount ? 1 : 0);
@@ -549,10 +559,10 @@
                 currentLap += stintLaps;
             }
             
-            // Show warning message if system auto-corrected user's pit entry
+            // UI Warning Updates
             const msg = document.getElementById('message');
-            if (originalUserPits < minPitsRequired) {
-                msg.textContent = `Pit stops automatically increased to ${finalPits} due to ${forcedReason}.`;
+            if (showMessage) {
+                msg.innerHTML = `<strong>Auto-Adjusted:</strong> ${warningText}`;
                 msg.classList.remove('hidden');
             } else {
                 msg.classList.add('hidden');
