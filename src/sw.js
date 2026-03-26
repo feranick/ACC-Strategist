@@ -2,7 +2,8 @@
 // ACC Strategist — Service Worker (Offline Support)
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_VERSION = 'acc-strategist-v2026.03.25.1';
+const APP_VER = new URL(self.location).searchParams.get('v') || 'unknown';
+const CACHE_VERSION = 'acc-strategist-v' + APP_VER;
 
 // Files to cache for full offline support
 const PRECACHE_URLS = [

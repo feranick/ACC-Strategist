@@ -1333,7 +1333,7 @@ function init() {
     update();
     // ── Service Worker Registration ──
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
+        navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION)
             .then(reg => {
                 console.log('[App] SW registered, scope:', reg.scope);
 
