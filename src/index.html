@@ -481,7 +481,7 @@ function computeStrategy(inp) {
 
     // Fuel per lap exceeds tank?
     if (inp.fuelPerLap > car.capacity) {
-        result.warnings.push(`CRITICAL: Fuel/lap (${inp.fuelPerLap}L) exceeds tank (${car.capacity}L)!`);
+        result.warnings.push('CRITICAL: Fuel/lap (' + inp.fuelPerLap + 'L) exceeds tank (' + car.capacity + 'L)!');
         return result;
     }
 
@@ -508,7 +508,7 @@ function computeStrategy(inp) {
 
         if (totalFuel > car.capacity) {
             result.warnings.push(
-                `Cannot finish without refueling! Need ${totalFuel.toFixed(1)}L but tank is ${car.capacity}L. Enable refueling or shorten race.`
+                'Cannot finish without refueling! Need ' + totalFuel.toFixed(1) + 'L but tank is ' + car.capacity + 'L. Enable refueling or shorten race.'
             );
         }
 
@@ -540,12 +540,12 @@ function computeStrategy(inp) {
             finalPits = minPits;
             corrected = true;
             correctionMsg = maxLapsFuel < maxLapsTime
-                ? `Pit stops raised to ${finalPits} (tank limit: ${car.capacity}L).`
-                : `Pit stops raised to ${finalPits} (stint limit: ${inp.maxStintMin}m).`;
+                ? 'Pit stops raised to ' + finalPits + ' (tank limit: ' + car.capacity + 'L).'
+                : 'Pit stops raised to ' + finalPits + ' (stint limit: ' + inp.maxStintMin + 'm).';
         } else if (finalPits > Math.max(minPits, totalLaps - 1)) {
             finalPits = minPits;
             corrected = true;
-            correctionMsg = `Pit stops reduced to ${finalPits} (excessive for race length).`;
+            correctionMsg = 'Pit stops reduced to ' + finalPits + ' (excessive for race length).';
         } else {
             break; // converged
         }
@@ -588,10 +588,10 @@ function computeStrategy(inp) {
         const stintWarnings = [];
 
         if (stintFuel > car.capacity) {
-            stintWarnings.push(`CRITICAL: ${stintFuel.toFixed(1)}L exceeds ${car.capacity}L tank!`);
+            stintWarnings.push('CRITICAL: ' + stintFuel.toFixed(1) + 'L exceeds ' + car.capacity + 'L tank!');
         }
         if (!isLast && stintTimeMins > inp.maxStintMin) {
-            stintWarnings.push(`CRITICAL: ${stintTimeMins.toFixed(1)}m exceeds ${inp.maxStintMin}m stint limit!`);
+            stintWarnings.push('CRITICAL: ' + stintTimeMins.toFixed(1) + 'm exceeds ' + inp.maxStintMin + 'm stint limit!');
         }
         if (!inp.tiresEnabled && stintTimeMins > 60) {
             stintWarnings.push('Tire wear may be critical without tire change.');
