@@ -13,183 +13,233 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0d1117; }
-        .card { background-color: #161b22; border: 1px solid #30363d; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0d1117; 
+        }
+        
+        .card { 
+            background-color: #161b22; 
+            border: 1px solid #30363d; 
+        }
+        
         .input-group input[type="text"],
         .input-group input[type="number"],
         .input-group select {
-            background-color: #21262d; border: 1px solid #484f58;
-            color: #c9d1d9; transition: border-color 0.2s;
+            background-color: #21262d; 
+            border: 1px solid #484f58;
+            color: #c9d1d9; 
+            transition: border-color 0.2s;
         }
+        
         .input-group input[type="text"]:focus,
         .input-group input[type="number"]:focus,
         .input-group select:focus {
-            border-color: #58a6ff; box-shadow: 0 0 0 1px #58a6ff;
+            border-color: #58a6ff; 
+            box-shadow: 0 0 0 1px #58a6ff;
         }
-        .input-group input:invalid { border-color: #f87171; box-shadow: 0 0 0 1px #f87171; }
+        
+        .input-group input:invalid { 
+            border-color: #f87171; 
+            box-shadow: 0 0 0 1px #f87171; 
+        }
+        
         .warning { color: #fca5a5; font-weight: 600; }
         .recommendation { color: #fcd34d; font-weight: 500; }
+        
         .toggle-label {
             cursor: pointer; display: block; padding: 0.75rem; text-align: center;
             border-radius: 0.75rem; font-weight: 500; transition: all 0.2s ease-in-out;
             color: #9ca3af; background-color: #21262d; border: 1px solid #484f58;
         }
+        
         .toggle-checkbox { display: none; }
         .toggle-checkbox:checked + .toggle-label {
             background-color: #1f2937; border-color: #58a6ff;
             color: #58a6ff; box-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
         }
+        
         @keyframes flash-update {
-            0% { box-shadow: 0 0 0 0 rgba(88,166,255,0.5); }
-            50% { box-shadow: 0 0 15px 3px rgba(88,166,255,0.3); }
-            100% { box-shadow: 0 0 0 0 rgba(88,166,255,0); }
+            0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.5); }
+            50% { box-shadow: 0 0 15px 3px rgba(88, 166, 255, 0.3); }
+            100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
         }
+        
         .result-flash { animation: flash-update 0.5s ease-out; }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen text-gray-200">
-<div id="app" class="max-w-7xl mx-auto flex flex-col min-h-screen">
-    <header class="text-center mb-8">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-blue-500">ACC Strategist</h1>
-        <p class="text-gray-400 mt-2">Race Strategy & Setup Engineering Assistant</p>
-    </header>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 grow">
+    <div id="app" class="max-w-7xl mx-auto flex flex-col min-h-screen">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-500">ACC Strategist</h1>
+            <p class="text-gray-400 mt-2">Race Strategy & Setup Engineering Assistant</p>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 grow">
+            <div class="lg:col-span-2 card p-6 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Race Inputs</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="input-group">
+                        <label for="track" class="block text-sm font-medium mb-1 text-gray-400">Track</label>
+                        <select id="track" class="w-full p-2 rounded-lg"></select>
+                    </div>
+                    <div class="input-group">
+                        <label for="car" class="block text-sm font-medium mb-1 text-gray-400">Car</label>
+                        <select id="car" class="w-full p-2 rounded-lg"></select>
+                    </div>
+                    <div class="input-group">
+                        <label for="fuelStrategy" class="block text-sm font-medium mb-1 text-gray-400">Fuel Strategy</label>
+                        <select id="fuelStrategy" class="w-full p-2 rounded-lg">
+                            <option value="equal">Equal Load (Standard)</option>
+                            <option value="minimal">Minimal Load (Performance)</option>
+                        </select>
+                    </div>
+                </div>
 
-        <!-- Inputs Card -->
-        <div class="lg:col-span-2 card p-6 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Race Inputs</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div class="input-group">
-                    <label for="track" class="block text-sm font-medium mb-1 text-gray-400">Track</label>
-                    <select id="track" class="w-full p-2 rounded-lg"></select>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="input-group">
+                        <label for="avgLapTime" class="block text-sm font-medium mb-1 text-gray-400">Avg Lap Time (M:SS.000)</label>
+                        <input type="text" id="avgLapTime" class="w-full p-2 rounded-lg" value="1:50.000" placeholder="1:50.000">
+                    </div>
+                    <div class="input-group">
+                        <label for="fuelPerLap" class="block text-sm font-medium mb-1 text-gray-400">Fuel / Lap (L)</label>
+                        <input type="number" id="fuelPerLap" class="w-full p-2 rounded-lg" step="0.01" min="0.1" max="25" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="raceDuration" class="block text-sm font-medium mb-1 text-gray-400">Duration (e.g. 1h, 90m, 1h30m)</label>
+                        <input type="text" id="raceDuration" class="w-full p-2 rounded-lg" value="1h" placeholder="1h, 90m, 1h30m">
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="car" class="block text-sm font-medium mb-1 text-gray-400">Car</label>
-                    <select id="car" class="w-full p-2 rounded-lg"></select>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-6 gap-4 mb-6 border-t border-gray-700 pt-6">
+                    <div class="input-group">
+                        <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint (min)</label>
+                        <input type="number" id="maxStintTime" class="w-full p-2 rounded-lg" value="65" min="5" max="999" step="1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="pitStops" class="block text-sm font-medium mb-1 text-gray-400">Pit Stops</label>
+                        <input type="number" id="pitStops" class="w-full p-2 rounded-lg" value="1" min="0" max="99" step="1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="safetyLaps" class="block text-sm font-medium mb-1 text-gray-400">Safety Laps</label>
+                        <input type="number" id="safetyLaps" class="w-full p-2 rounded-lg" value="2" min="0" max="10" step="0.5" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="pitLossTime" class="block text-sm font-medium mb-1 text-gray-400">Pit Loss (sec)</label>
+                        <input type="number" id="pitLossTime" class="w-full p-2 rounded-lg" value="60" min="0" max="300" step="1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="ambientTemp" class="block text-sm font-medium mb-1 text-gray-400">Ambient (°C)</label>
+                        <input type="number" id="ambientTemp" class="w-full p-2 rounded-lg" value="22" min="-10" max="50" step="1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rakeAggressiveness" class="block text-sm font-medium mb-1 text-gray-400">Aero Rake</label>
+                        <select id="rakeAggressiveness" class="w-full p-2 rounded-lg">
+                            <option value="standard">Standard</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="aggressive">Aggressive</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="fuelStrategy" class="block text-sm font-medium mb-1 text-gray-400">Fuel Strategy</label>
-                    <select id="fuelStrategy" class="w-full p-2 rounded-lg">
-                        <option value="equal">Equal Load (Standard)</option>
-                        <option value="minimal">Minimal Load (Performance)</option>
-                    </select>
+
+                <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6 border-t border-gray-700 pt-4">
+                    <div class="input-group">
+                        <label for="elecProfile" class="block text-sm font-medium mb-1 text-gray-400">Electronics Profile</label>
+                        <select id="elecProfile" class="w-full p-2 rounded-lg">
+                            <option value="safe">Safe/Endurance</option>
+                            <option value="balanced">Balanced</option>
+                            <option value="esports">Aggressive/Esports</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 class="text-base font-semibold text-gray-300 mb-3 border-t border-gray-700 pt-3">Pit Stop Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <input type="checkbox" id="refuelRequired" class="toggle-checkbox" checked>
+                        <label for="refuelRequired" class="toggle-label">Include Refuel</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="tiresRequired" class="toggle-checkbox" checked>
+                        <label for="tiresRequired" class="toggle-label">Change Tires</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="driverSwapRequired" class="toggle-checkbox" checked>
+                        <label for="driverSwapRequired" class="toggle-label">Driver Swap</label>
+                    </div>
                 </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                <div class="input-group">
-                    <label for="avgLapTime" class="block text-sm font-medium mb-1 text-gray-400">Avg Lap Time (M:SS.000)</label>
-                    <input type="text" id="avgLapTime" class="w-full p-2 rounded-lg" value="1:50.000" placeholder="1:50.000">
+
+            <div id="resultsCard" class="lg:col-span-1 card p-6 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Strategy Results</h2>
+                <div class="space-y-4 text-center sm:text-left">
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Estimated Laps</p>
+                        <p id="totalLaps" class="text-2xl font-extrabold text-white">--</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Total Fuel Needed</p>
+                        <p id="totalFuel" class="text-2xl font-extrabold text-white">-- L</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Calculated Pit Stops</p>
+                        <p id="calculatedPits" class="text-2xl font-extrabold text-white">--</p>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-blue-400">Est. Pit Time Loss</p>
+                        <p id="totalPitLoss" class="text-2xl font-extrabold text-white">--</p>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="fuelPerLap" class="block text-sm font-medium mb-1 text-gray-400">Fuel / Lap (L)</label>
-                    <input type="number" id="fuelPerLap" class="w-full p-2 rounded-lg" step="0.01" min="0.1" max="25" required>
-                </div>
-                <div class="input-group">
-                    <label for="raceDuration" class="block text-sm font-medium mb-1 text-gray-400">Duration (e.g. 1h, 90m, 1h30m)</label>
-                    <input type="text" id="raceDuration" class="w-full p-2 rounded-lg" value="1h" placeholder="1h, 90m, 1h30m">
-                </div>
+                <div id="message" class="mt-4 p-3 bg-red-800/30 border border-red-700 rounded-lg text-red-300 hidden"></div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-6 gap-4 mb-6 border-t border-gray-700 pt-6">
-                <div class="input-group">
-                    <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint (min)</label>
-                    <input type="number" id="maxStintTime" class="w-full p-2 rounded-lg" value="65" min="5" max="999" step="1" required>
-                </div>
-                <div class="input-group">
-                    <label for="pitStops" class="block text-sm font-medium mb-1 text-gray-400">Pit Stops</label>
-                    <input type="number" id="pitStops" class="w-full p-2 rounded-lg" value="1" min="0" max="99" step="1" required>
-                </div>
-                <div class="input-group">
-                    <label for="safetyLaps" class="block text-sm font-medium mb-1 text-gray-400">Safety Laps</label>
-                    <input type="number" id="safetyLaps" class="w-full p-2 rounded-lg" value="2" min="0" max="10" step="0.5" required>
-                </div>
-                <div class="input-group">
-                    <label for="pitLossTime" class="block text-sm font-medium mb-1 text-gray-400">Pit Loss (sec)</label>
-                    <input type="number" id="pitLossTime" class="w-full p-2 rounded-lg" value="60" min="0" max="300" step="1" required>
-                </div>
-                <div class="input-group">
-                    <label for="ambientTemp" class="block text-sm font-medium mb-1 text-gray-400">Ambient (°C)</label>
-                    <input type="number" id="ambientTemp" class="w-full p-2 rounded-lg" value="22" min="-10" max="50" step="1" required>
-                </div>
-                <div class="input-group">
-                    <label for="rakeAggressiveness" class="block text-sm font-medium mb-1 text-gray-400">Aero Rake</label>
-                    <select id="rakeAggressiveness" class="w-full p-2 rounded-lg">
-                        <option value="standard">Standard</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="aggressive">Aggressive</option>
-                    </select>
-                </div>
+
+            <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl border-l-4 border-l-blue-500">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Engineer Setup Advice
+                </h2>
+                <p class="text-xs text-gray-500 italic mb-4">Baseline heuristic recommendations. Always validate in a practice session before racing.</p>
+                <div id="setupAdvice" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm"></div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6 border-t border-gray-700 pt-4">
-                <div class="input-group">
-                    <label for="elecProfile" class="block text-sm font-medium mb-1 text-gray-400">Electronics Profile</label>
-                    <select id="elecProfile" class="w-full p-2 rounded-lg">
-                        <option value="safe">Safe/Endurance</option>
-                        <option value="balanced">Balanced</option>
-                        <option value="esports">Aggressive/Esports</option>
-                    </select>
-                </div>
+
+            <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl border-l-4 border-l-green-500">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="6" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="2" stroke-width="2"/>
+                    </svg>
+                    Tire Strategy
+                </h2>
+                <p class="text-xs text-gray-500 italic mb-4">
+                    Wear estimates based on track surface, car weight distribution, compound, and temperature.
+                    Actual wear depends on driving style and setup.
+                </p>
+                <div id="tireSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+                <div id="tireStints" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
-            <h3 class="text-base font-semibold text-gray-300 mb-3 border-t border-gray-700 pt-3">Pit Stop Actions</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div><input type="checkbox" id="refuelRequired" class="toggle-checkbox" checked><label for="refuelRequired" class="toggle-label">Include Refuel</label></div>
-                <div><input type="checkbox" id="tiresRequired" class="toggle-checkbox" checked><label for="tiresRequired" class="toggle-label">Change Tires</label></div>
-                <div><input type="checkbox" id="driverSwapRequired" class="toggle-checkbox" checked><label for="driverSwapRequired" class="toggle-label">Driver Swap</label></div>
+
+            <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Stint & Pit Strategy (<span id="strategyType">--</span>)</h2>
+                <div id="stintDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
 
-        <!-- Results Card -->
-        <div id="resultsCard" class="lg:col-span-1 card p-6 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Strategy Results</h2>
-            <div class="space-y-4 text-center sm:text-left">
-                <div><p class="text-lg font-semibold text-blue-400">Estimated Laps</p><p id="totalLaps" class="text-2xl font-extrabold text-white">--</p></div>
-                <div><p class="text-lg font-semibold text-blue-400">Total Fuel Needed</p><p id="totalFuel" class="text-2xl font-extrabold text-white">-- L</p></div>
-                <div><p class="text-lg font-semibold text-blue-400">Calculated Pit Stops</p><p id="calculatedPits" class="text-2xl font-extrabold text-white">--</p></div>
-                <div><p class="text-lg font-semibold text-blue-400">Est. Pit Time Loss</p><p id="totalPitLoss" class="text-2xl font-extrabold text-white">--</p></div>
-            </div>
-            <div id="message" class="mt-4 p-3 bg-red-800/30 border border-red-700 rounded-lg text-red-300 hidden"></div>
-        </div>
-
-        <!-- Setup Advisor Card -->
-        <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl border-l-4 border-l-blue-500">
-            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white flex items-center">
-                <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Engineer Setup Advice
-            </h2>
-            <p class="text-xs text-gray-500 italic mb-4">Baseline heuristic recommendations. Always validate in a practice session before racing.</p>
-            <div id="setupAdvice" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm"></div>
-        </div>
-
-        <!-- Stint Strategy Card -->
-        <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Stint & Pit Strategy (<span id="strategyType">--</span>)</h2>
-            <div id="stintDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
-        <!-- Tire Strategy Card -->
-        <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl border-l-4 border-l-green-500">
-            <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white flex items-center">
-                <svg class="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                    <circle cx="12" cy="12" r="6" stroke-width="2"/>
-                    <circle cx="12" cy="12" r="2" stroke-width="2"/>
-                </svg>
-                Tire Strategy
-            </h2>
-            <p class="text-xs text-gray-500 italic mb-4">
-                Wear estimates based on track surface, car weight distribution, compound, and temperature.
-                Actual wear depends on driving style and setup.
-            </p>
-            <div id="tireSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
-            <div id="tireStints" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
+        <footer class="mt-8 pb-4 text-center">
+            <p id="footer-version" class="text-xs text-gray-600 font-mono"></p>
+        </footer>
     </div>
-    <footer class="mt-8 pb-4 text-center">
-        <p id="footer-version" class="text-xs text-gray-600 font-mono"></p>
-    </footer>
-</div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-const APP_VERSION = '2026.03.26.1';
+// ===============================================================
+// CONSTANTS & DATA
+// ===============================================================
+const APP_VERSION = '2026.03.26.2';
 const STORAGE_KEY = 'acc_strategy_v2';
 
 const TRACK_DATA = [
@@ -239,111 +289,77 @@ const CAR_DATA = [
   {name:"Porsche 992 GT3 R",factor:0.93,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:50,elec:{tc:4,tc2:null,abs:3,hasTC2:false}}
 ];
 
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // TIRE WEAR MODEL
-// ═══════════════════════════════════════════════════════════
-
-// Track surface aggressiveness multiplier (1.0 = baseline)
+// ===============================================================
 const TRACK_TIRE_WEAR = {
-    "Barcelona": 1.1,
-    "Brands Hatch": 1.3,
-    "COTA": 1.0,
-    "Donington": 1.2,
-    "Hungaroring": 0.9,
-    "Imola": 1.1,
-    "Indianapolis": 0.8,
-    "Kyalami": 1.1,
-    "Laguna Seca": 1.3,
-    "Misano": 1.1,
-    "Monza": 0.7,
-    "Mount Panorama": 1.4,
-    "Nürburgring 24h": 1.5,
-    "Nürburgring GP": 1.0,
-    "Oulton Park": 1.3,
-    "Paul Ricard": 0.8,
-    "Red Bull Ring": 1.0,
-    "Silverstone": 0.9,
-    "Snetterton": 0.9,
-    "Spa-Francorchamps": 1.0,
-    "Suzuka": 1.1,
-    "Valencia": 1.0,
-    "Zandvoort": 1.2,
-    "Zolder": 1.4
+    "Barcelona": 1.1, "Brands Hatch": 1.3, "COTA": 1.0, "Donington": 1.2,
+    "Hungaroring": 0.9, "Imola": 1.1, "Indianapolis": 0.8, "Kyalami": 1.1,
+    "Laguna Seca": 1.3, "Misano": 1.1, "Monza": 0.7, "Mount Panorama": 1.4,
+    "Nürburgring 24h": 1.5, "Nürburgring GP": 1.0, "Oulton Park": 1.3,
+    "Paul Ricard": 0.8, "Red Bull Ring": 1.0, "Silverstone": 0.9,
+    "Snetterton": 0.9, "Spa-Francorchamps": 1.0, "Suzuka": 1.1,
+    "Valencia": 1.0, "Zandvoort": 1.2, "Zolder": 1.4
 };
 
-// Car front-axle weight bias affects front tire wear
 const ENGINE_WEAR_BIAS = {
-    "Front": { front: 1.15, rear: 0.9 },   // Heavy nose eats fronts
-    "Mid":   { front: 1.0,  rear: 1.0 },   // Balanced
-    "Rear":  { front: 0.9,  rear: 1.15 }   // Rear-engine eats rears
+    "Front": { front: 1.15, rear: 0.9 },
+    "Mid":   { front: 1.0,  rear: 1.0 },
+    "Rear":  { front: 0.9,  rear: 1.15 }
 };
 
-// Tire compound data
 const TIRE_COMPOUNDS = {
     dry: [
-        {
-            name: "DHF (Dry Hard Front)",
-            code: "DHF",
-            type: "dry",
-            optimalRange: { min: 15, max: 35 },   // minutes of peak grip
-            usableRange: { min: 0, max: 55 },      // minutes before critical
-            tempWindow: { min: 15, max: 35 },       // ambient °C sweet spot
-            gripFactor: 0.97,                        // relative to medium
-            wearRate: 0.7                            // relative wear speed
-        },
-        {
-            name: "DHR (Dry Hard Rear)",
-            code: "DHR",
-            type: "dry",
-            optimalRange: { min: 15, max: 35 },
-            usableRange: { min: 0, max: 55 },
-            tempWindow: { min: 15, max: 35 },
-            gripFactor: 0.97,
-            wearRate: 0.7
-        },
-        {
-            name: "DM (Dry Medium)",
-            code: "DM",
-            type: "dry",
-            optimalRange: { min: 10, max: 28 },
-            usableRange: { min: 0, max: 45 },
-            tempWindow: { min: 12, max: 30 },
-            gripFactor: 1.0,
-            wearRate: 1.0
-        },
-        {
-            name: "DS (Dry Soft)",
-            code: "DS",
-            type: "dry",
-            optimalRange: { min: 5, max: 18 },
-            usableRange: { min: 0, max: 30 },
-            tempWindow: { min: 8, max: 25 },
-            gripFactor: 1.03,
-            wearRate: 1.4
-        }
+        { code: "DHF", type: "dry", optimalRange: { max: 35 }, usableRange: { max: 55 }, wearRate: 0.7 },
+        { code: "DHR", type: "dry", optimalRange: { max: 35 }, usableRange: { max: 55 }, wearRate: 0.7 },
+        { code: "DM",  type: "dry", optimalRange: { max: 28 }, usableRange: { max: 45 }, wearRate: 1.0 },
+        { code: "DS",  type: "dry", optimalRange: { max: 18 }, usableRange: { max: 30 }, wearRate: 1.4 }
     ],
     wet: [
-        {
-            name: "W (Wet)",
-            code: "W",
-            type: "wet",
-            optimalRange: { min: 10, max: 40 },
-            usableRange: { min: 0, max: 60 },
-            tempWindow: { min: 5, max: 25 },
-            gripFactor: 1.0,
-            wearRate: 0.8
-        }
+        { code: "W",   type: "wet", optimalRange: { max: 40 }, usableRange: { max: 60 }, wearRate: 0.8 }
     ]
 };
 
-// ═══════════════════════════════════════════════════════════
+function getCompoundData(code) {
+    const map = {
+        "DH": { wearRate: 0.7, optimalRange: { max: 35 }, usableRange: { max: 55 } },
+        "DM": { wearRate: 1.0, optimalRange: { max: 28 }, usableRange: { max: 45 } },
+        "DS": { wearRate: 1.4, optimalRange: { max: 18 }, usableRange: { max: 30 } },
+        "W":  { wearRate: 0.8, optimalRange: { max: 40 }, usableRange: { max: 60 } }
+    };
+    return map[code] || map["DM"];
+}
+
+function getCompoundFullName(code) {
+    const names = { "DH": "Dry Hard", "DM": "Dry Medium", "DS": "Dry Soft", "W": "Wet" };
+    return names[code] || code;
+}
+
+function estimateGrip(ageMinutes, optimalEnd, usableEnd) {
+    if (ageMinutes <= 0) return 100;
+    if (ageMinutes <= optimalEnd) {
+        return Math.round(100 - (ageMinutes / optimalEnd) * 10);
+    }
+    if (ageMinutes <= usableEnd) {
+        const pct = (ageMinutes - optimalEnd) / (usableEnd - optimalEnd);
+        return Math.round(90 - pct * 40);
+    }
+    const overrun = ageMinutes - usableEnd;
+    return Math.max(20, Math.round(50 - overrun * 2));
+}
+
+function clampVal(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+}
+
+// ===============================================================
 // DOM REFS
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 const D = {};
 ['track','car','fuelStrategy','avgLapTime','fuelPerLap','raceDuration',
  'maxStintTime','pitStops','safetyLaps','pitLossTime','ambientTemp',
  'totalLaps','totalFuel','calculatedPits','totalPitLoss','strategyType',
- 'stintDetails','setupAdvice','resultsCard','message'].forEach(id => {
+ 'stintDetails','setupAdvice','resultsCard','message', 'tireStints', 'tireSummary'].forEach(id => {
     D[id] = document.getElementById(id);
 });
 D.rake = document.getElementById('rakeAggressiveness');
@@ -352,15 +368,13 @@ D.refuel = document.getElementById('refuelRequired');
 D.tires = document.getElementById('tiresRequired');
 D.swap = document.getElementById('driverSwapRequired');
 D.footerVersion = document.getElementById('footer-version');
-D.tireStints = document.getElementById('tireStints');
-D.tireSummary = document.getElementById('tireSummary');
 
 let saveTimeout;
 let suppressPitEvents = false;
 
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // PARSING
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function parseLapTime(time) {
     const str = String(time).trim();
     const parts = str.split(':');
@@ -391,11 +405,9 @@ function parseDuration(str) {
     return v >= 10 ? v * 60 : v * 3600;
 }
 
-function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
-
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // PERSISTENCE (localStorage)
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function saveSettings() {
     const s = {
         track: D.track.value, car: D.car.value, fuelStrategy: D.fuelStrategy.value,
@@ -440,9 +452,9 @@ function setPitStopsQuiet(val) {
     suppressPitEvents = false;
 }
 
-// ═══════════════════════════════════════════════════════════
-// PURE COMPUTATION: getInputs → computeStrategy → result obj
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
+// PURE COMPUTATION
+// ===============================================================
 function getInputs() {
     return {
         trackName: D.track.value,
@@ -479,7 +491,6 @@ function computeStrategy(inp) {
     result.car = car;
     result.durationMins = inp.durationSecs / 60;
 
-    // Fuel per lap exceeds tank?
     if (inp.fuelPerLap > car.capacity) {
         result.warnings.push('CRITICAL: Fuel/lap (' + inp.fuelPerLap + 'L) exceeds tank (' + car.capacity + 'L)!');
         return result;
@@ -494,7 +505,6 @@ function computeStrategy(inp) {
         return result;
     }
 
-    // If no refuel, must finish on one tank
     if (!inp.refuelEnabled) {
         const racingTime = inp.durationSecs;
         const totalLaps = Math.ceil(racingTime / inp.lapTime);
@@ -507,9 +517,7 @@ function computeStrategy(inp) {
         result.valid = true;
 
         if (totalFuel > car.capacity) {
-            result.warnings.push(
-                'Cannot finish without refueling! Need ' + totalFuel.toFixed(1) + 'L but tank is ' + car.capacity + 'L. Enable refueling or shorten race.'
-            );
+            result.warnings.push('Cannot finish without refueling! Need ' + totalFuel.toFixed(1) + 'L but tank is ' + car.capacity + 'L.');
         }
 
         result.stints.push({
@@ -520,13 +528,11 @@ function computeStrategy(inp) {
         return result;
     }
 
-    // With refueling: iterative solve (pit time reduces racing time)
     let finalPits = Math.max(0, inp.userPitStops);
     let totalLaps, totalFuel;
     let corrected = false;
     let correctionMsg = '';
 
-    // Iterate: compute laps accounting for pit loss
     for (let iter = 0; iter < 5; iter++) {
         const racingTime = Math.max(0, inp.durationSecs - (finalPits * inp.pitLossSecs));
         totalLaps = Math.ceil(racingTime / inp.lapTime);
@@ -547,7 +553,7 @@ function computeStrategy(inp) {
             corrected = true;
             correctionMsg = 'Pit stops reduced to ' + finalPits + ' (excessive for race length).';
         } else {
-            break; // converged
+            break;
         }
     }
 
@@ -560,7 +566,6 @@ function computeStrategy(inp) {
     result.correctionMsg = correctionMsg;
     result.valid = true;
 
-    // Distribute laps across stints
     let fuelLoaded = 0;
     let lapCounter = 0;
     const safetyPerStint = inp.safetyLaps / stints;
@@ -578,7 +583,6 @@ function computeStrategy(inp) {
             stintFuel = (stintLaps + safetyPerStint) * inp.fuelPerLap;
         }
 
-        // Last stint correction for rounding (max 0.5L drift)
         if (isLast) {
             const remainder = totalFuel - fuelLoaded - stintFuel;
             if (Math.abs(remainder) < 0.5) stintFuel += remainder;
@@ -612,65 +616,13 @@ function computeStrategy(inp) {
     return result;
 }
 
-// ═══════════════════════════════════════════════════════════
-// TIRE HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════
-
-function getCompoundData(code) {
-    const map = {
-        "DH": { wearRate: 0.7, optimalRange: { max: 35 }, usableRange: { max: 55 } },
-        "DM": { wearRate: 1.0, optimalRange: { max: 28 }, usableRange: { max: 45 } },
-        "DS": { wearRate: 1.4, optimalRange: { max: 18 }, usableRange: { max: 30 } },
-        "W":  { wearRate: 0.8, optimalRange: { max: 40 }, usableRange: { max: 60 } }
-    };
-    return map[code] || map["DM"];
-}
-
-function getCompoundFullName(code) {
-    const names = {
-        "DH": "Dry Hard",
-        "DM": "Dry Medium",
-        "DS": "Dry Soft",
-        "W": "Wet"
-    };
-    return names[code] || code;
-}
-
-function estimateGrip(ageMinutes, optimalEnd, usableEnd) {
-    if (ageMinutes <= 0) return 100;
-    if (ageMinutes <= optimalEnd) {
-        // Gentle dropoff in optimal window: 100% → 90%
-        return Math.round(100 - (ageMinutes / optimalEnd) * 10);
-    }
-    if (ageMinutes <= usableEnd) {
-        // Steeper dropoff past optimal: 90% → 50%
-        const pct = (ageMinutes - optimalEnd) / (usableEnd - optimalEnd);
-        return Math.round(90 - pct * 40);
-    }
-    // Beyond usable: 50% → 20% (dangerous)
-    const overrun = ageMinutes - usableEnd;
-    return Math.max(20, Math.round(50 - overrun * 2));
-}
-
-function clampVal(val, min, max) {
-    return Math.max(min, Math.min(max, val));
-}
-
-// ═══════════════════════════════════════════════════════════
-// TIRE STRATEGY COMPUTATION
-// ═══════════════════════════════════════════════════════════
-
+// ===============================================================
+// TIRE COMPUTATION
+// ===============================================================
 function computeTireStrategy(strategyResult, inp) {
-    const ts = {
-        stints: [],
-        overallAdvice: [],
-        compound: null,
-        valid: false
-    };
+    const ts = { stints: [], overallAdvice: [], compound: null, valid: false };
 
-    if (!strategyResult.valid || !strategyResult.track || !strategyResult.car) {
-        return ts;
-    }
+    if (!strategyResult.valid || !strategyResult.track || !strategyResult.car) return ts;
 
     const track = strategyResult.track;
     const car = strategyResult.car;
@@ -679,14 +631,12 @@ function computeTireStrategy(strategyResult, inp) {
     const trackWearMult = TRACK_TIRE_WEAR[track.name] || 1.0;
     const engineBias = ENGINE_WEAR_BIAS[car.enginePos] || ENGINE_WEAR_BIAS["Mid"];
 
-    // ── Select compound ──
     let compound;
     if (temp >= 28) compound = "DH";
     else if (temp >= 15) compound = "DM";
     else if (temp >= 8) compound = "DS";
     else compound = "DM";
 
-    // High-wear track pushes toward harder compound
     if (trackWearMult >= 1.3 && compound === "DS") compound = "DM";
     if (trackWearMult >= 1.3 && compound === "DM" && temp >= 25) compound = "DH";
 
@@ -696,10 +646,8 @@ function computeTireStrategy(strategyResult, inp) {
     const effectiveLife = cData.usableRange.max / effectiveWearRate;
     const effectiveOptEnd = cData.optimalRange.max / effectiveWearRate;
 
-    // ── First pass: decide changes per stint ──
     let tireAge = 0;
     let tireSet = 1;
-    const stintAnalysis = [];
 
     strategyResult.stints.forEach((stint, idx) => {
         const stintMins = stint.timeMins || (stint.laps * inp.lapTime / 60);
@@ -712,35 +660,26 @@ function computeTireStrategy(strategyResult, inp) {
         let urgency = "none";
 
         if (idx === 0) {
-            // First stint: always on fresh tires
             reason = "Fresh tires.";
         } else if (!tiresEnabled) {
-            // No changes allowed: warn only
             if (projectedAge > effectiveLife) {
-                urgency = "critical";
-                reason = "Tires at " + gripEnd + "% grip. Dangerous!";
+                urgency = "critical"; reason = "Tires at " + gripEnd + "% grip. Dangerous!";
             } else if (projectedAge > effectiveOptEnd) {
-                urgency = "recommended";
-                reason = "Past peak. ~" + gripEnd + "% grip.";
+                urgency = "recommended"; reason = "Past peak. ~" + gripEnd + "% grip.";
             } else {
                 reason = "Tires OK (" + gripEnd + "%).";
             }
         } else {
-            // Changes enabled: smart decision
             const remaining = strategyResult.stints.length - idx;
-
             if (projectedAge > effectiveLife * 0.9) {
-                changeTires = true;
-                urgency = "critical";
+                changeTires = true; urgency = "critical";
                 reason = "Must change. Would reach " + gripEnd + "% grip.";
             } else if (projectedAge > effectiveOptEnd) {
                 if (remaining <= 1) {
-                    changeTires = true;
-                    urgency = "recommended";
+                    changeTires = true; urgency = "recommended";
                     reason = "Fresh rubber for final push (now: " + gripStart + "%).";
                 } else if (projectedAge > effectiveOptEnd * 1.3) {
-                    changeTires = true;
-                    urgency = "recommended";
+                    changeTires = true; urgency = "recommended";
                     reason = "Grip dropping (" + gripEnd + "%). Change now.";
                 } else {
                     urgency = "optional";
@@ -751,46 +690,23 @@ function computeTireStrategy(strategyResult, inp) {
             }
         }
 
-        // Front/rear specific wear percentages
-        const fWear = clampVal(
-            Math.round(100 - (projectedAge * effectiveWearRate * engineBias.front * 1.5)),
-            0, 100
-        );
-        const rWear = clampVal(
-            Math.round(100 - (projectedAge * effectiveWearRate * engineBias.rear * 1.5)),
-            0, 100
-        );
+        const fWear = clampVal(Math.round(100 - (projectedAge * effectiveWearRate * engineBias.front * 1.5)), 0, 100);
+        const rWear = clampVal(Math.round(100 - (projectedAge * effectiveWearRate * engineBias.rear * 1.5)), 0, 100);
 
-        stintAnalysis.push({
-            stintIndex: idx,
-            stintLaps: stint.laps,
-            stintMins: stintMins,
-            tireAgeStart: tireAge,
-            tireAgeEnd: projectedAge,
-            gripStart: gripStart,
-            gripEnd: gripEnd,
-            frontWear: fWear,
-            rearWear: rWear,
-            changeTires: changeTires,
-            reason: reason,
-            urgency: urgency,
-            tireSet: tireSet,
-            compound: compound
+        ts.stints.push({
+            stintIndex: idx, stintLaps: stint.laps, stintMins: stintMins,
+            tireAgeStart: tireAge, tireAgeEnd: projectedAge, gripStart: gripStart,
+            gripEnd: gripEnd, frontWear: fWear, rearWear: rWear,
+            changeTires: changeTires, reason: reason, urgency: urgency,
+            tireSet: tireSet, compound: compound
         });
 
-        if (changeTires) {
-            tireAge = stintMins;
-            tireSet++;
-        } else {
-            tireAge = projectedAge;
-        }
+        if (changeTires) { tireAge = stintMins; tireSet++; } 
+        else { tireAge = projectedAge; }
     });
 
-    ts.stints = stintAnalysis;
     ts.valid = true;
 
-    // ── Second pass: optimize by looking ahead ──
-    // If we have an "optional" followed by a "critical", upgrade optional → recommended
     for (let i = 0; i < ts.stints.length - 1; i++) {
         if (ts.stints[i].urgency === "optional") {
             const next = ts.stints[i + 1];
@@ -802,153 +718,37 @@ function computeTireStrategy(strategyResult, inp) {
         }
     }
 
-    // ── Build overall advice ──
-    ts.overallAdvice.push(
-        "Compound: <strong>" + getCompoundFullName(compound) + "</strong> (" + temp + "°C ambient)"
-    );
-
+    ts.overallAdvice.push("Compound: <strong>" + getCompoundFullName(compound) + "</strong> (" + temp + "°C ambient)");
     const totalSets = ts.stints.reduce((max, s) => Math.max(max, s.tireSet), 1);
     const changes = ts.stints.filter(s => s.changeTires).length;
-    ts.overallAdvice.push(
-        "Tire sets needed: <strong>" + totalSets + "</strong> ("
-        + changes + " change" + (changes !== 1 ? "s" : "") + ")"
-    );
+    ts.overallAdvice.push("Tire sets needed: <strong>" + totalSets + "</strong> (" + changes + " change" + (changes !== 1 ? "s" : "") + ")");
 
-    if (trackWearMult >= 1.3) {
-        ts.overallAdvice.push(
-            "<span class='text-yellow-400'>High-wear track!</span> "
-            + track.name + " is aggressive on tires (" + trackWearMult + "x wear)."
-        );
-    }
-    if (trackWearMult <= 0.8) {
-        ts.overallAdvice.push(
-            "<span class='text-green-400'>Low-wear track.</span> "
-            + "Tires last longer here. Consider skipping a change."
-        );
-    }
-    if (car.enginePos === "Front") {
-        ts.overallAdvice.push(
-            "<span class='text-yellow-400'>Front-engine:</span> "
-            + "Monitor front temps. Expect higher front degradation."
-        );
-    } else if (car.enginePos === "Rear") {
-        ts.overallAdvice.push(
-            "<span class='text-yellow-400'>Rear-engine:</span> "
-            + "Monitor rear temps. Expect higher rear degradation."
-        );
-    }
-
-    // Compound alternatives
-    if (compound === "DM") {
-        if (temp >= 25) {
-            ts.overallAdvice.push(
-                "If temps rise further, consider switching to <strong>Dry Hard</strong>."
-            );
-        }
-        if (temp <= 18) {
-            ts.overallAdvice.push(
-                "If temps drop, <strong>Dry Soft</strong> could give early-stint advantage."
-            );
-        }
-    }
+    if (trackWearMult >= 1.3) ts.overallAdvice.push("<span class='text-yellow-400'>High-wear track!</span> " + track.name + " is aggressive on tires (" + trackWearMult + "x wear).");
+    if (trackWearMult <= 0.8) ts.overallAdvice.push("<span class='text-green-400'>Low-wear track.</span> Tires last longer here. Consider skipping a change.");
+    if (car.enginePos === "Front") ts.overallAdvice.push("<span class='text-yellow-400'>Front-engine:</span> Monitor front temps. Expect higher front degradation.");
+    else if (car.enginePos === "Rear") ts.overallAdvice.push("<span class='text-yellow-400'>Rear-engine:</span> Monitor rear temps. Expect higher rear degradation.");
 
     return ts;
 }
 
-// ═══════════════════════════════════════════════════════════
-// TIRE STRATEGY RENDERING
-// ═══════════════════════════════════════════════════════════
-
-function renderTireStrategy(ts) {
-    const container = D.tireStints;
-    const summaryEl = D.tireSummary;
-
-    if (!ts.valid || ts.stints.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 italic">No tire data available.</p>';
-        summaryEl.innerHTML = '';
-        return;
-    }
-
-    // Summary
-    summaryEl.innerHTML = ts.overallAdvice.map(a =>
-        '<div class="p-2 rounded bg-gray-800/50 border border-gray-700 text-sm">' + a + '</div>'
-    ).join('');
-
-    // Per-stint cards
-    container.innerHTML = ts.stints.map(s => {
-        const urgencyColors = {
-            none: "border-gray-700",
-            optional: "border-yellow-800",
-            recommended: "border-yellow-500",
-            critical: "border-red-500"
-        };
-        const urgencyBg = {
-            none: "bg-gray-800/50",
-            optional: "bg-yellow-900/20",
-            recommended: "bg-yellow-900/30",
-            critical: "bg-red-900/30"
-        };
-        const borderCls = urgencyColors[s.urgency] || urgencyColors.none;
-        const bgCls = urgencyBg[s.urgency] || urgencyBg.none;
-
-        const changeLabel = s.stintIndex === 0
-            ? '<span class="text-green-400 text-xs font-bold">NEW TIRES</span>'
-            : s.changeTires
-                ? '<span class="text-yellow-300 text-xs font-bold">⟳ CHANGE TIRES</span>'
-                : '<span class="text-gray-500 text-xs">Keep current set</span>';
-
-        const gripBar = buildGripBar(s.gripStart, s.gripEnd);
-        const wearBars = buildWearBars(s.frontWear, s.rearWear);
-
-        return '<div class="p-4 rounded-lg ' + bgCls + ' border ' + borderCls + '">'
-            + '<div class="flex justify-between items-center mb-2">'
-            +   '<p class="font-bold text-yellow-300">Stint ' + (s.stintIndex + 1) + '</p>'
-            +   '<span class="text-[10px] text-gray-400 font-mono">Set #' + s.tireSet
-            +     ' | ' + getCompoundFullName(s.compound) + '</span>'
-            + '</div>'
-            + '<div class="mb-2">' + changeLabel + '</div>'
-            + '<div class="mb-2">' + gripBar + '</div>'
-            + '<div class="mb-2">' + wearBars + '</div>'
-            + '<p class="text-xs text-gray-400">'
-            +   Math.round(s.stintMins) + ' min'
-            +   ' | Age: ' + Math.round(s.tireAgeStart) + '→' + Math.round(s.tireAgeEnd) + ' min'
-            + '</p>'
-            + '<p class="text-xs mt-1" style="color:'
-            +   (s.urgency === 'critical' ? '#fca5a5'
-            +     : s.urgency === 'recommended' ? '#fcd34d'
-            +     : s.urgency === 'optional' ? '#93c5fd' : '#6b7280')
-            + '">' + s.reason + '</p>'
-            + '</div>';
-    }).join('');
+function gripColor(pct) {
+    if (pct >= 80) return '#4ade80';
+    if (pct >= 60) return '#facc15';
+    if (pct >= 40) return '#fb923c';
+    return '#f87171';
 }
 
 function buildGripBar(startPct, endPct) {
     const startColor = gripColor(startPct);
     const endColor = gripColor(endPct);
-
     return '<div class="flex items-center gap-2 text-[10px]">'
         + '<span class="text-gray-500 w-8">Grip</span>'
         + '<div class="flex-1 h-3 bg-gray-900 rounded-full overflow-hidden relative">'
         +   '<div class="absolute inset-y-0 left-0 rounded-full transition-all" style="'
-        +     'width:' + startPct + '%;'
-        +     'background: linear-gradient(90deg, ' + startColor + ', ' + endColor + ');'
-        +     'opacity: 0.7;'
-        +   '"></div>'
-        +   '<div class="absolute inset-y-0 left-0 rounded-full" style="'
-        +     'width:' + endPct + '%;'
-        +     'background: ' + endColor + ';'
-        +   '"></div>'
+        +     'width:' + startPct + '%; background: linear-gradient(90deg, ' + startColor + ', ' + endColor + '); opacity: 0.7;"></div>'
+        +   '<div class="absolute inset-y-0 left-0 rounded-full" style="width:' + endPct + '%; background: ' + endColor + ';"></div>'
         + '</div>'
-        + '<span class="w-12 text-right font-mono" style="color:' + endColor + '">'
-        +   endPct + '%'
-        + '</span>'
-        + '</div>';
-}
-
-function buildWearBars(frontPct, rearPct) {
-    return '<div class="grid grid-cols-2 gap-2 text-[10px]">'
-        + buildSingleWearBar("Front", frontPct)
-        + buildSingleWearBar("Rear", rearPct)
+        + '<span class="w-12 text-right font-mono" style="color:' + endColor + '">' + endPct + '%</span>'
         + '</div>';
 }
 
@@ -957,26 +757,45 @@ function buildSingleWearBar(label, pct) {
     return '<div class="flex items-center gap-1">'
         + '<span class="text-gray-500 w-7">' + label[0] + '</span>'
         + '<div class="flex-1 h-2 bg-gray-900 rounded-full overflow-hidden">'
-        +   '<div class="h-full rounded-full" style="'
-        +     'width:' + pct + '%; background:' + col + ';'
-        +   '"></div>'
+        +   '<div class="h-full rounded-full" style="width:' + pct + '%; background:' + col + ';"></div>'
         + '</div>'
-        + '<span class="w-8 text-right font-mono" style="color:' + col + '">'
-        +   pct + '%'
-        + '</span>'
+        + '<span class="w-8 text-right font-mono" style="color:' + col + '">' + pct + '%</span>'
         + '</div>';
 }
 
-function gripColor(pct) {
-    if (pct >= 80) return '#4ade80'; // green
-    if (pct >= 60) return '#facc15'; // yellow
-    if (pct >= 40) return '#fb923c'; // orange
-    return '#f87171';                // red
+function buildWearBars(frontPct, rearPct) {
+    return '<div class="grid grid-cols-2 gap-2 text-[10px]">' + buildSingleWearBar("Front", frontPct) + buildSingleWearBar("Rear", rearPct) + '</div>';
 }
 
-</script>
+function renderTireStrategy(ts) {
+    if (!ts.valid || ts.stints.length === 0) {
+        D.tireStints.innerHTML = '<p class="text-gray-500 italic">No tire data available.</p>';
+        D.tireSummary.innerHTML = '';
+        return;
+    }
 
-<script>
+    D.tireSummary.innerHTML = ts.overallAdvice.map(a => '<div class="p-2 rounded bg-gray-800/50 border border-gray-700 text-sm">' + a + '</div>').join('');
+
+    D.tireStints.innerHTML = ts.stints.map(s => {
+        const borderCls = s.urgency === 'critical' ? 'border-red-500' : s.urgency === 'recommended' ? 'border-yellow-500' : s.urgency === 'optional' ? 'border-yellow-800' : 'border-gray-700';
+        const bgCls = s.urgency === 'critical' ? 'bg-red-900/30' : s.urgency === 'recommended' ? 'bg-yellow-900/30' : s.urgency === 'optional' ? 'bg-yellow-900/20' : 'bg-gray-800/50';
+
+        const changeLabel = s.stintIndex === 0 ? '<span class="text-green-400 text-xs font-bold">NEW TIRES</span>' : s.changeTires ? '<span class="text-yellow-300 text-xs font-bold">⟳ CHANGE TIRES</span>' : '<span class="text-gray-500 text-xs">Keep current set</span>';
+
+        return '<div class="p-4 rounded-lg ' + bgCls + ' border ' + borderCls + '">'
+            + '<div class="flex justify-between items-center mb-2">'
+            +   '<p class="font-bold text-yellow-300">Stint ' + (s.stintIndex + 1) + '</p>'
+            +   '<span class="text-[10px] text-gray-400 font-mono">Set #' + s.tireSet + ' | ' + getCompoundFullName(s.compound) + '</span>'
+            + '</div>'
+            + '<div class="mb-2">' + changeLabel + '</div>'
+            + '<div class="mb-2">' + buildGripBar(s.gripStart, s.gripEnd) + '</div>'
+            + '<div class="mb-2">' + buildWearBars(s.frontWear, s.rearWear) + '</div>'
+            + '<p class="text-xs text-gray-400">' + Math.round(s.stintMins) + ' min | Age: ' + Math.round(s.tireAgeStart) + '→' + Math.round(s.tireAgeEnd) + ' min</p>'
+            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#6b7280') + '">' + s.reason + '</p>'
+            + '</div>';
+    }).join('');
+}
+
 // ===============================================================
 // SETUP ADVICE GENERATOR
 // ===============================================================
@@ -989,15 +808,12 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     if (aggro === 'moderate') { rakeMod = 5; wingMod = 1; }
     if (aggro === 'aggressive') { rakeMod = 10; wingMod = 2; }
 
-    // 1. Tire Pressures
     var calcCold = 25.0 - ((temp - 20) * 0.1);
     advice.push({
         title: "Tire Pressures",
-        text: 'Cold: <strong>' + (calcCold - 0.2).toFixed(1) + '-' + (calcCold + 0.2).toFixed(1) + ' PSI</strong>'
-            + '<br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0</span>'
+        text: 'Cold: <strong>' + (calcCold - 0.2).toFixed(1) + '-' + (calcCold + 0.2).toFixed(1) + ' PSI</strong><br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0</span>'
     });
 
-    // 2. Electronics
     var tc = car.elec.tc;
     var tc2 = car.elec.tc2;
     var abs = car.elec.abs;
@@ -1026,14 +842,11 @@ function generateSetupAdvice(track, car, durationMins, inp) {
         text: eTxt + '<br><span class="text-[10px] text-gray-500">' + elecNote + '</span>'
     });
 
-    // 3. Rear Wing
     advice.push({
         title: "Rear Wing",
-        text: 'Base: <strong>' + track.wing + '</strong>. '
-            + (wingMod > 0 ? '+' + wingMod + ' for ' + aggro + ' rake.' : 'Standard.')
+        text: 'Base: <strong>' + track.wing + '</strong>. ' + (wingMod > 0 ? '+' + wingMod + ' for ' + aggro + ' rake.' : 'Standard.')
     });
 
-    // 4. Ride Heights
     var diff = track.rakeDiff + rakeMod;
     var refFront = car.baseFRH;
     var compNote = "";
@@ -1048,37 +861,22 @@ function generateSetupAdvice(track, car, durationMins, inp) {
         text: rh + compNote + '<br><span class="text-[10px] text-gray-500 font-mono">(Rake +' + diff + 'mm)</span>'
     });
 
-    // 5. Alignment
     advice.push({
         title: "Alignment",
-        text: car.enginePos === "Front"
-            ? '<strong>More Negative Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>'
-            : '<strong>Standard Max Neg Camber</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
+        text: car.enginePos === "Front" ? '<strong>More Negative Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>' : '<strong>Standard Max Neg Camber</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
     });
 
-    // 6. Anti-Roll Bars
     var arb;
-    if (car.enginePos === "Front") {
-        arb = 'F: <strong>Soft 4-5</strong> R: <strong>Stiff 6-7</strong>'
-            + '<br><span class="text-[10px] text-gray-500">Cures front understeer</span>';
-    } else if (car.enginePos === "Rear") {
-        arb = 'F: <strong>Med-Stiff</strong> R: <strong>Soft</strong>'
-            + '<br><span class="text-[10px] text-gray-500">Controls rear pendulum</span>';
-    } else {
-        arb = 'F: <strong>Stiff</strong> R: <strong>Soft-Med</strong>'
-            + '<br><span class="text-[10px] text-gray-500">Holds aero platform</span>';
-    }
+    if (car.enginePos === "Front") arb = 'F: <strong>Soft 4-5</strong> R: <strong>Stiff 6-7</strong><br><span class="text-[10px] text-gray-500">Cures front understeer</span>';
+    else if (car.enginePos === "Rear") arb = 'F: <strong>Med-Stiff</strong> R: <strong>Soft</strong><br><span class="text-[10px] text-gray-500">Controls rear pendulum</span>';
+    else arb = 'F: <strong>Stiff</strong> R: <strong>Soft-Med</strong><br><span class="text-[10px] text-gray-500">Holds aero platform</span>';
     advice.push({ title: "Anti-Roll Bars", text: arb });
 
-    // 7. Brake Bias
     advice.push({
         title: "Brake Bias",
-        text: car.enginePos === "Front"
-            ? '<strong>53.5%-54.5%</strong><br><span class="text-[10px] text-gray-500">Rearward for trail braking.</span>'
-            : '<strong>56.0%-58.0%</strong><br><span class="text-[10px] text-gray-500">Standard forward bias.</span>'
+        text: car.enginePos === "Front" ? '<strong>53.5%-54.5%</strong><br><span class="text-[10px] text-gray-500">Rearward for trail braking.</span>' : '<strong>56.0%-58.0%</strong><br><span class="text-[10px] text-gray-500">Standard forward bias.</span>'
     });
 
-    // 8. Bumpstops
     var bsr = "10-15", bst = "800-1000";
     if (aggro === 'aggressive') { bsr = "2-6"; bst = "1500-2000"; }
     else if (aggro === 'moderate') { bsr = "6-12"; bst = "1200-1500"; }
@@ -1089,7 +887,6 @@ function generateSetupAdvice(track, car, durationMins, inp) {
         text: 'Front Range: <strong>' + bsr + '</strong><br>Front Rate: <strong>' + bst + '</strong>'
     });
 
-    // 9. Brake Hardware
     var pad = durationMins > 90 ? "Pad 2" : "Pad 1";
     var duct = durationMins > 60 ? "Duct 3" : "Duct 2";
     if (track.brakeWear === 3) duct = "Duct 4+";
@@ -1098,19 +895,16 @@ function generateSetupAdvice(track, car, durationMins, inp) {
         text: 'Use <strong>' + pad + '</strong>. Ducts: <strong>' + duct + '</strong>.'
     });
 
-    // 10. Steering and FFB
     advice.push({
         title: "Steering and FFB",
-        text: car.enginePos === "Front"
-            ? "Heavy nose numbs FFB on gear wheels. Trail brake deep to rotate."
-            : "Rely on aero balance. Avoid over-driving front tires."
+        text: car.enginePos === "Front" ? "Heavy nose numbs FFB on gear wheels. Trail brake deep to rotate." : "Rely on aero balance. Avoid over-driving front tires."
     });
 
     return advice;
 }
 
 // ===============================================================
-// RENDERING
+// RENDERING MAIN
 // ===============================================================
 function flashResults() {
     D.resultsCard.classList.remove('result-flash');
@@ -1123,12 +917,9 @@ function renderResults(res) {
     D.totalFuel.textContent = res.valid ? res.totalFuel.toFixed(1) + ' L' : '-- L';
     D.calculatedPits.textContent = res.valid ? res.finalPits : '--';
     D.totalPitLoss.textContent = res.valid ? res.pitLossTotal + ' sec' : '--';
-    D.strategyType.textContent = res.valid
-        ? (D.fuelStrategy.value === 'equal' ? 'Equal' : 'Minimal') : '--';
+    D.strategyType.textContent = res.valid ? (D.fuelStrategy.value === 'equal' ? 'Equal' : 'Minimal') : '--';
 
-    if (res.valid && res.corrected) {
-        setPitStopsQuiet(res.finalPits);
-    }
+    if (res.valid && res.corrected) setPitStopsQuiet(res.finalPits);
 
     var msgs = [];
     if (res.correctionMsg) msgs.push('<strong>Auto-Adjusted:</strong> ' + res.correctionMsg);
@@ -1140,7 +931,6 @@ function renderResults(res) {
         D.message.classList.add('hidden');
     }
 
-    // Stint cards
     D.stintDetails.innerHTML = '';
     if (res.valid) {
         var lapCounter = 0;
@@ -1153,32 +943,22 @@ function renderResults(res) {
 
             D.stintDetails.innerHTML +=
                 '<div class="p-4 rounded-lg bg-gray-800/50 border border-gray-700">'
-                + '<p class="font-bold text-yellow-300">Stint ' + (st.index + 1)
-                +   ' (' + st.laps + ' Laps)</p>'
-                + '<p>Load: <span class="font-mono text-blue-300">'
-                +   st.fuel.toFixed(1) + ' L</span></p>'
-                + '<p class="text-[10px] text-gray-500 uppercase tracking-tighter">'
-                +   (st.isLast ? 'Finish' : 'Pit Lap ' + lapCounter)
-                + '</p>'
+                + '<p class="font-bold text-yellow-300">Stint ' + (st.index + 1) + ' (' + st.laps + ' Laps)</p>'
+                + '<p>Load: <span class="font-mono text-blue-300">' + st.fuel.toFixed(1) + ' L</span></p>'
+                + '<p class="text-[10px] text-gray-500 uppercase tracking-tighter">' + (st.isLast ? 'Finish' : 'Pit Lap ' + lapCounter) + '</p>'
                 + '<div class="mt-1 flex flex-col">' + notes + '</div>'
                 + '</div>';
         });
     }
 
-    // Setup advice
     if (res.track && res.car) {
         var setupInputs = getInputs();
         var advice = generateSetupAdvice(res.track, res.car, res.durationMins, setupInputs);
         D.setupAdvice.innerHTML = advice.map(function(a) {
-            return '<div class="p-3 rounded bg-gray-900 border border-gray-700">'
-                + '<h4 class="text-blue-400 font-bold mb-1 text-xs uppercase tracking-wider">'
-                + a.title + '</h4>'
-                + '<p class="text-gray-300 leading-tight">' + a.text + '</p>'
-                + '</div>';
+            return '<div class="p-3 rounded bg-gray-900 border border-gray-700"><h4 class="text-blue-400 font-bold mb-1 text-xs uppercase tracking-wider">' + a.title + '</h4><p class="text-gray-300 leading-tight">' + a.text + '</p></div>';
         }).join('');
     }
 
-    // Tire Strategy
     var tireInputs = getInputs();
     var tireResult = computeTireStrategy(res, tireInputs);
     renderTireStrategy(tireResult);
@@ -1187,7 +967,7 @@ function renderResults(res) {
 }
 
 // ===============================================================
-// MAIN UPDATE PIPELINE
+// MAIN PIPELINE & INIT
 // ===============================================================
 function update() {
     var inp = getInputs();
@@ -1212,9 +992,6 @@ function debouncedSaveAndUpdate() {
     update();
 }
 
-// ===============================================================
-// EVENT BINDING
-// ===============================================================
 function bindEvents() {
     D.track.addEventListener('change', function() { updateFuelEstimate(); debouncedSaveAndUpdate(); });
     D.car.addEventListener('change', function() { updateFuelEstimate(); debouncedSaveAndUpdate(); });
@@ -1234,9 +1011,6 @@ function bindEvents() {
     });
 }
 
-// ===============================================================
-// UPDATE NOTIFICATION BANNER
-// ===============================================================
 function showUpdateBanner(worker) {
     if (document.getElementById('update-banner')) return;
 
@@ -1260,9 +1034,6 @@ function showUpdateBanner(worker) {
     });
 }
 
-// ===============================================================
-// INITIALIZATION
-// ===============================================================
 function init() {
     D.footerVersion.textContent = 'v' + APP_VERSION;
 
@@ -1272,51 +1043,19 @@ function init() {
         .forEach(function(c) { D.car.add(new Option(c.name, c.name)); });
 
     var loaded = loadSettings();
-    if (!loaded) {
-        updateFuelEstimate();
-    }
-
-    // Migrate old cookie
-    try {
-        var oldCookie = document.cookie.split(';')
-            .find(function(c) { return c.trim().startsWith('acc_strategy_settings_v17='); });
-        if (oldCookie && !loaded) {
-            var old = JSON.parse(oldCookie.split('=').slice(1).join('='));
-            D.track.value = old.track || D.track.value;
-            D.car.value = old.car || D.car.value;
-            D.fuelStrategy.value = old.fuelStrategy || 'equal';
-            D.avgLapTime.value = old.avgLapTime || '1:50.000';
-            D.fuelPerLap.value = old.fuelPerLap || '';
-            D.raceDuration.value = old.raceDuration || '1h';
-            D.maxStintTime.value = old.maxStintTime || '65';
-            D.pitStops.value = old.pitStops || '1';
-            D.safetyLaps.value = old.safetyLaps || '2';
-            D.ambientTemp.value = old.ambientTemp || '22';
-            D.rake.value = old.rakeAggro || 'standard';
-            D.elec.value = old.elec || 'safe';
-            D.refuel.checked = old.refuel !== false;
-            D.tires.checked = old.tires !== false;
-            D.swap.checked = old.swap !== false;
-            document.cookie = 'acc_strategy_settings_v17=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';
-            saveSettings();
-        }
-    } catch(e) {}
+    if (!loaded) updateFuelEstimate();
 
     bindEvents();
     update();
 
-    // Service Worker Registration
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION)
             .then(function(reg) {
                 console.log('[App] SW registered, scope:', reg.scope);
-
                 setInterval(function() { reg.update(); }, 30 * 60 * 1000);
-
                 reg.addEventListener('updatefound', function() {
                     var newWorker = reg.installing;
                     if (!newWorker) return;
-
                     newWorker.addEventListener('statechange', function() {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             showUpdateBanner(newWorker);
