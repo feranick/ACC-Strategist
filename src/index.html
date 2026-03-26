@@ -239,7 +239,7 @@
 // ===============================================================
 // CONSTANTS & DATA
 // ===============================================================
-const APP_VERSION = '2026.03.26.3';
+const APP_VERSION = '2026.03.26.4';
 const STORAGE_KEY = 'acc_strategy_v2';
 
 const TRACK_DATA = [
@@ -663,23 +663,23 @@ function computeTireStrategy(strategyResult, inp) {
                 const remainingStints = strategyResult.stints.length - idx;
                 
                 if (projectedAgeIfKeep > effectiveLife * 0.9) {
-                    changeTires = true; urgency = "critical";
-                    reason = "Must change. Would reach " + gripIfKeep + "% grip.";
+                    changeTires = true;
+                    reason = "Changed tires (old set would drop to " + gripIfKeep + "% grip).";
                 } else if (projectedAgeIfKeep > effectiveOptEnd) {
                     if (remainingStints <= 1) {
-                        changeTires = true; urgency = "recommended";
-                        reason = "Fresh rubber for final push.";
+                        changeTires = true;
+                        reason = "Changed for final push.";
                     } else if (projectedAgeIfKeep > effectiveOptEnd * 1.3) {
-                        changeTires = true; urgency = "recommended";
-                        reason = "Grip dropping. Change now.";
+                        changeTires = true;
+                        reason = "Changed tires (old set dropping to " + gripIfKeep + "% grip).";
                     } else {
                         // Look ahead to next stint (if current is optional)
                         const nextStint = strategyResult.stints[idx + 1];
                         if (nextStint) {
                             const nextMins = nextStint.timeMins || (nextStint.laps * inp.lapTime / 60);
                             if (projectedAgeIfKeep + nextMins > effectiveLife * 0.9) {
-                                changeTires = true; urgency = "recommended";
-                                reason = "Change now to avoid critical wear next stint.";
+                                changeTires = true;
+                                reason = "Changed to avoid critical wear in the next stint.";
                             } else {
                                 urgency = "optional";
                                 reason = "Past peak (" + gripIfKeep + "%) but usable. Could skip.";
@@ -696,9 +696,11 @@ function computeTireStrategy(strategyResult, inp) {
         }
 
         // Apply tire change before running the stint simulation
+        // (Resets the age and the UI urgency so the new stint is framed as safe)
         if (changeTires) {
             tireAge = 0;
             tireSet++;
+            urgency = "none"; 
         }
 
         // Now calculate stats for THIS stint
@@ -796,7 +798,7 @@ function renderTireStrategy(ts) {
             + '<div class="mb-2">' + buildGripBar(s.gripStart, s.gripEnd) + '</div>'
             + '<div class="mb-2">' + buildWearBars(s.frontWear, s.rearWear) + '</div>'
             + '<p class="text-xs text-gray-400">' + Math.round(s.stintMins) + ' min | Age: ' + Math.round(s.tireAgeStart) + '→' + Math.round(s.tireAgeEnd) + ' min</p>'
-            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#6b7280') + '">' + s.reason + '</p>'
+            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#9ca3af') + '">' + s.reason + '</p>'
             + '</div>';
     }).join('');
 }
