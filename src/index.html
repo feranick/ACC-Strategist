@@ -1130,9 +1130,9 @@ function renderResults(res) {
         setPitStopsQuiet(res.finalPits);
     }
 
-    const msgs = [];
+    var msgs = [];
     if (res.correctionMsg) msgs.push('<strong>Auto-Adjusted:</strong> ' + res.correctionMsg);
-    res.warnings.forEach(w => msgs.push(w));
+    res.warnings.forEach(function(w) { msgs.push(w); });
     if (msgs.length > 0) {
         D.message.innerHTML = msgs.join('<br>');
         D.message.classList.remove('hidden');
@@ -1143,11 +1143,11 @@ function renderResults(res) {
     // Stint cards
     D.stintDetails.innerHTML = '';
     if (res.valid) {
-        let lapCounter = 0;
-        res.stints.forEach(st => {
+        var lapCounter = 0;
+        res.stints.forEach(function(st) {
             lapCounter += st.laps;
-            const notes = (st.warnings || []).map(w => {
-                const cls = w.startsWith('CRITICAL') ? 'warning' : 'recommendation';
+            var notes = (st.warnings || []).map(function(w) {
+                var cls = w.startsWith('CRITICAL') ? 'warning' : 'recommendation';
                 return '<span class="' + cls + ' text-[10px]">' + w + '</span>';
             }).join('');
 
@@ -1167,20 +1167,20 @@ function renderResults(res) {
 
     // Setup advice
     if (res.track && res.car) {
-        const inp = getInputs();
-        const advice = generateSetupAdvice(res.track, res.car, res.durationMins, inp);
-        D.setupAdvice.innerHTML = advice.map(a =>
-            '<div class="p-3 rounded bg-gray-900 border border-gray-700">'
-            + '<h4 class="text-blue-400 font-bold mb-1 text-xs uppercase tracking-wider">'
-            + a.title + '</h4>'
-            + '<p class="text-gray-300 leading-tight">' + a.text + '</p>'
-            + '</div>'
-        ).join('');
+        var setupInputs = getInputs();
+        var advice = generateSetupAdvice(res.track, res.car, res.durationMins, setupInputs);
+        D.setupAdvice.innerHTML = advice.map(function(a) {
+            return '<div class="p-3 rounded bg-gray-900 border border-gray-700">'
+                + '<h4 class="text-blue-400 font-bold mb-1 text-xs uppercase tracking-wider">'
+                + a.title + '</h4>'
+                + '<p class="text-gray-300 leading-tight">' + a.text + '</p>'
+                + '</div>';
+        }).join('');
     }
 
-    // ── TIRE STRATEGY ──
-    const inp = getInputs();
-    const tireResult = computeTireStrategy(res, inp);
+    // Tire Strategy
+    var tireInputs = getInputs();
+    var tireResult = computeTireStrategy(res, tireInputs);
     renderTireStrategy(tireResult);
 
     flashResults();
