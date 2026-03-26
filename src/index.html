@@ -239,7 +239,7 @@
 // ===============================================================
 // CONSTANTS & DATA
 // ===============================================================
-const APP_VERSION = '2026.03.26.2';
+const APP_VERSION = '2026.03.26.3';
 const STORAGE_KEY = 'acc_strategy_v2';
 
 const TRACK_DATA = [
@@ -306,18 +306,6 @@ const ENGINE_WEAR_BIAS = {
     "Front": { front: 1.15, rear: 0.9 },
     "Mid":   { front: 1.0,  rear: 1.0 },
     "Rear":  { front: 0.9,  rear: 1.15 }
-};
-
-const TIRE_COMPOUNDS = {
-    dry: [
-        { code: "DHF", type: "dry", optimalRange: { max: 35 }, usableRange: { max: 55 }, wearRate: 0.7 },
-        { code: "DHR", type: "dry", optimalRange: { max: 35 }, usableRange: { max: 55 }, wearRate: 0.7 },
-        { code: "DM",  type: "dry", optimalRange: { max: 28 }, usableRange: { max: 45 }, wearRate: 1.0 },
-        { code: "DS",  type: "dry", optimalRange: { max: 18 }, usableRange: { max: 30 }, wearRate: 1.4 }
-    ],
-    wet: [
-        { code: "W",   type: "wet", optimalRange: { max: 40 }, usableRange: { max: 60 }, wearRate: 0.8 }
-    ]
 };
 
 function getCompoundData(code) {
@@ -651,45 +639,73 @@ function computeTireStrategy(strategyResult, inp) {
 
     strategyResult.stints.forEach((stint, idx) => {
         const stintMins = stint.timeMins || (stint.laps * inp.lapTime / 60);
-        const projectedAge = tireAge + stintMins;
-        const gripEnd = estimateGrip(projectedAge, effectiveOptEnd, effectiveLife);
-        const gripStart = estimateGrip(tireAge, effectiveOptEnd, effectiveLife);
-
+        
         let changeTires = false;
         let reason = "";
         let urgency = "none";
 
+        // Evaluate whether we need to change tires BEFORE calculating wear for this stint
         if (idx === 0) {
             reason = "Fresh tires.";
-        } else if (!tiresEnabled) {
-            if (projectedAge > effectiveLife) {
-                urgency = "critical"; reason = "Tires at " + gripEnd + "% grip. Dangerous!";
-            } else if (projectedAge > effectiveOptEnd) {
-                urgency = "recommended"; reason = "Past peak. ~" + gripEnd + "% grip.";
-            } else {
-                reason = "Tires OK (" + gripEnd + "%).";
-            }
         } else {
-            const remaining = strategyResult.stints.length - idx;
-            if (projectedAge > effectiveLife * 0.9) {
-                changeTires = true; urgency = "critical";
-                reason = "Must change. Would reach " + gripEnd + "% grip.";
-            } else if (projectedAge > effectiveOptEnd) {
-                if (remaining <= 1) {
-                    changeTires = true; urgency = "recommended";
-                    reason = "Fresh rubber for final push (now: " + gripStart + "%).";
-                } else if (projectedAge > effectiveOptEnd * 1.3) {
-                    changeTires = true; urgency = "recommended";
-                    reason = "Grip dropping (" + gripEnd + "%). Change now.";
+            const projectedAgeIfKeep = tireAge + stintMins;
+            const gripIfKeep = estimateGrip(projectedAgeIfKeep, effectiveOptEnd, effectiveLife);
+            
+            if (!tiresEnabled) {
+                if (projectedAgeIfKeep > effectiveLife) {
+                    urgency = "critical"; reason = "Tires at " + gripIfKeep + "% grip. Dangerous!";
+                } else if (projectedAgeIfKeep > effectiveOptEnd) {
+                    urgency = "recommended"; reason = "Past peak. ~" + gripIfKeep + "% grip.";
                 } else {
-                    urgency = "optional";
-                    reason = "Past peak (" + gripEnd + "%) but usable. Could skip.";
+                    reason = "Tires OK (" + gripIfKeep + "%).";
                 }
             } else {
-                reason = "Tires OK (" + gripEnd + "% projected).";
+                const remainingStints = strategyResult.stints.length - idx;
+                
+                if (projectedAgeIfKeep > effectiveLife * 0.9) {
+                    changeTires = true; urgency = "critical";
+                    reason = "Must change. Would reach " + gripIfKeep + "% grip.";
+                } else if (projectedAgeIfKeep > effectiveOptEnd) {
+                    if (remainingStints <= 1) {
+                        changeTires = true; urgency = "recommended";
+                        reason = "Fresh rubber for final push.";
+                    } else if (projectedAgeIfKeep > effectiveOptEnd * 1.3) {
+                        changeTires = true; urgency = "recommended";
+                        reason = "Grip dropping. Change now.";
+                    } else {
+                        // Look ahead to next stint (if current is optional)
+                        const nextStint = strategyResult.stints[idx + 1];
+                        if (nextStint) {
+                            const nextMins = nextStint.timeMins || (nextStint.laps * inp.lapTime / 60);
+                            if (projectedAgeIfKeep + nextMins > effectiveLife * 0.9) {
+                                changeTires = true; urgency = "recommended";
+                                reason = "Change now to avoid critical wear next stint.";
+                            } else {
+                                urgency = "optional";
+                                reason = "Past peak (" + gripIfKeep + "%) but usable. Could skip.";
+                            }
+                        } else {
+                            urgency = "optional";
+                            reason = "Past peak (" + gripIfKeep + "%) but usable. Could skip.";
+                        }
+                    }
+                } else {
+                    reason = "Tires OK (" + gripIfKeep + "% projected).";
+                }
             }
         }
 
+        // Apply tire change before running the stint simulation
+        if (changeTires) {
+            tireAge = 0;
+            tireSet++;
+        }
+
+        // Now calculate stats for THIS stint
+        const projectedAge = tireAge + stintMins;
+        const gripStart = estimateGrip(tireAge, effectiveOptEnd, effectiveLife);
+        const gripEnd = estimateGrip(projectedAge, effectiveOptEnd, effectiveLife);
+        
         const fWear = clampVal(Math.round(100 - (projectedAge * effectiveWearRate * engineBias.front * 1.5)), 0, 100);
         const rWear = clampVal(Math.round(100 - (projectedAge * effectiveWearRate * engineBias.rear * 1.5)), 0, 100);
 
@@ -701,22 +717,11 @@ function computeTireStrategy(strategyResult, inp) {
             tireSet: tireSet, compound: compound
         });
 
-        if (changeTires) { tireAge = stintMins; tireSet++; } 
-        else { tireAge = projectedAge; }
+        // Update tire age for the start of the next stint
+        tireAge = projectedAge;
     });
 
     ts.valid = true;
-
-    for (let i = 0; i < ts.stints.length - 1; i++) {
-        if (ts.stints[i].urgency === "optional") {
-            const next = ts.stints[i + 1];
-            if (next.urgency === "critical" || next.urgency === "recommended") {
-                ts.stints[i].urgency = "recommended";
-                ts.stints[i].changeTires = true;
-                ts.stints[i].reason = "Change now to avoid critical wear next stint.";
-            }
-        }
-    }
 
     ts.overallAdvice.push("Compound: <strong>" + getCompoundFullName(compound) + "</strong> (" + temp + "°C ambient)");
     const totalSets = ts.stints.reduce((max, s) => Math.max(max, s.tireSet), 1);
