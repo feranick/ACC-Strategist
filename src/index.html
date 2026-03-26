@@ -977,31 +977,31 @@ function gripColor(pct) {
 </script>
 
 <script>
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // SETUP ADVICE GENERATOR
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function generateSetupAdvice(track, car, durationMins, inp) {
-    const advice = [];
-    const aggro = inp.rake;
-    const elecMode = inp.elecProfile;
-    const temp = inp.ambientTemp;
-    let rakeMod = 0, wingMod = 0;
+    var advice = [];
+    var aggro = inp.rake;
+    var elecMode = inp.elecProfile;
+    var temp = inp.ambientTemp;
+    var rakeMod = 0, wingMod = 0;
     if (aggro === 'moderate') { rakeMod = 5; wingMod = 1; }
     if (aggro === 'aggressive') { rakeMod = 10; wingMod = 2; }
 
     // 1. Tire Pressures
-    const calcCold = 25.0 - ((temp - 20) * 0.1);
+    var calcCold = 25.0 - ((temp - 20) * 0.1);
     advice.push({
         title: "Tire Pressures",
-        text: `Cold: <strong>${(calcCold-0.2).toFixed(1)}-${(calcCold+0.2).toFixed(1)} PSI</strong>`
-            + `<br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0</span>`
+        text: 'Cold: <strong>' + (calcCold - 0.2).toFixed(1) + '-' + (calcCold + 0.2).toFixed(1) + ' PSI</strong>'
+            + '<br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0</span>'
     });
 
     // 2. Electronics
-    let tc = car.elec.tc;
-    let tc2 = car.elec.tc2;
-    let abs = car.elec.abs;
-    let elecNote = "";
+    var tc = car.elec.tc;
+    var tc2 = car.elec.tc2;
+    var abs = car.elec.abs;
+    var elecNote = "";
     if (elecMode === 'safe') {
         tc += 2; abs += 2;
         if (car.elec.hasTC2) tc2 += 2;
@@ -1015,58 +1015,58 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     }
     if (track.curbs === "Extreme" || track.curbs === "Very High") {
         abs += 1;
-        elecNote += " <span class='text-yellow-400 text-[10px]'>+1 ABS curbs</span>";
+        elecNote += ' <span class="text-yellow-400 text-[10px]">+1 ABS curbs</span>';
     }
-    let mapNum = car.mapRace;
+    var mapNum = car.mapRace;
     if (durationMins > 90 && inp.fuelStrategy === 'minimal') mapNum = car.mapFuel;
-    let eTxt = `Map: <strong>${mapNum}</strong> | ABS: <strong>${abs}</strong><br>TC1: <strong>${tc}</strong>`;
-    if (car.elec.hasTC2) eTxt += ` | TC2: <strong>${tc2}</strong>`;
+    var eTxt = 'Map: <strong>' + mapNum + '</strong> | ABS: <strong>' + abs + '</strong><br>TC1: <strong>' + tc + '</strong>';
+    if (car.elec.hasTC2) eTxt += ' | TC2: <strong>' + tc2 + '</strong>';
     advice.push({
         title: "Electronics",
-        text: eTxt + `<br><span class="text-[10px] text-gray-500">${elecNote}</span>`
+        text: eTxt + '<br><span class="text-[10px] text-gray-500">' + elecNote + '</span>'
     });
 
     // 3. Rear Wing
     advice.push({
         title: "Rear Wing",
-        text: `Base: <strong>${track.wing}</strong>. `
-            + (wingMod > 0 ? `+${wingMod} for ${aggro} rake.` : 'Standard.')
+        text: 'Base: <strong>' + track.wing + '</strong>. '
+            + (wingMod > 0 ? '+' + wingMod + ' for ' + aggro + ' rake.' : 'Standard.')
     });
 
     // 4. Ride Heights
-    const diff = track.rakeDiff + rakeMod;
-    let refFront = car.baseFRH;
-    let compNote = "";
+    var diff = track.rakeDiff + rakeMod;
+    var refFront = car.baseFRH;
+    var compNote = "";
     if (track.minFRH && refFront < track.minFRH) {
         refFront = track.minFRH;
-        compNote = "<br><span class='text-yellow-400 text-[10px]'>Raised for compression</span>";
+        compNote = '<br><span class="text-yellow-400 text-[10px]">Raised for compression</span>';
     }
-    let rh = `Front: <strong>${refFront}mm</strong><br>Rear: <strong>${refFront + diff}mm</strong>`;
-    if (car.rakeSens) rh += "<br><span class='text-red-400 text-[10px]'>Sensitive Floor</span>";
+    var rh = 'Front: <strong>' + refFront + 'mm</strong><br>Rear: <strong>' + (refFront + diff) + 'mm</strong>';
+    if (car.rakeSens) rh += '<br><span class="text-red-400 text-[10px]">Sensitive Floor</span>';
     advice.push({
         title: "Ride Heights",
-        text: rh + compNote + `<br><span class="text-[10px] text-gray-500 font-mono">(Rake +${diff}mm)</span>`
+        text: rh + compNote + '<br><span class="text-[10px] text-gray-500 font-mono">(Rake +' + diff + 'mm)</span>'
     });
 
     // 5. Alignment
     advice.push({
         title: "Alignment",
         text: car.enginePos === "Front"
-            ? "<strong>More Negative Front Toe-Out</strong><br><span class='text-[10px] text-gray-500'>Sharper turn-in for heavy nose.</span>"
-            : "<strong>Standard Max Neg Camber</strong><br><span class='text-[10px] text-gray-500'>Standard GT3 alignment.</span>"
+            ? '<strong>More Negative Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>'
+            : '<strong>Standard Max Neg Camber</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
     });
 
     // 6. Anti-Roll Bars
-    let arb;
+    var arb;
     if (car.enginePos === "Front") {
-        arb = "F: <strong>Soft 4-5</strong> R: <strong>Stiff 6-7</strong>"
-            + "<br><span class='text-[10px] text-gray-500'>Cures front understeer</span>";
+        arb = 'F: <strong>Soft 4-5</strong> R: <strong>Stiff 6-7</strong>'
+            + '<br><span class="text-[10px] text-gray-500">Cures front understeer</span>';
     } else if (car.enginePos === "Rear") {
-        arb = "F: <strong>Med-Stiff</strong> R: <strong>Soft</strong>"
-            + "<br><span class='text-[10px] text-gray-500'>Controls rear pendulum</span>";
+        arb = 'F: <strong>Med-Stiff</strong> R: <strong>Soft</strong>'
+            + '<br><span class="text-[10px] text-gray-500">Controls rear pendulum</span>';
     } else {
-        arb = "F: <strong>Stiff</strong> R: <strong>Soft-Med</strong>"
-            + "<br><span class='text-[10px] text-gray-500'>Holds aero platform</span>";
+        arb = 'F: <strong>Stiff</strong> R: <strong>Soft-Med</strong>'
+            + '<br><span class="text-[10px] text-gray-500">Holds aero platform</span>';
     }
     advice.push({ title: "Anti-Roll Bars", text: arb });
 
@@ -1074,33 +1074,33 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     advice.push({
         title: "Brake Bias",
         text: car.enginePos === "Front"
-            ? "<strong>53.5%-54.5%</strong><br><span class='text-[10px] text-gray-500'>Rearward for trail braking.</span>"
-            : "<strong>56.0%-58.0%</strong><br><span class='text-[10px] text-gray-500'>Standard forward bias.</span>"
+            ? '<strong>53.5%-54.5%</strong><br><span class="text-[10px] text-gray-500">Rearward for trail braking.</span>'
+            : '<strong>56.0%-58.0%</strong><br><span class="text-[10px] text-gray-500">Standard forward bias.</span>'
     });
 
     // 8. Bumpstops
-    let bsr = "10-15", bst = "800-1000";
+    var bsr = "10-15", bst = "800-1000";
     if (aggro === 'aggressive') { bsr = "2-6"; bst = "1500-2000"; }
     else if (aggro === 'moderate') { bsr = "6-12"; bst = "1200-1500"; }
     else if (track.curbs === "Extreme" || track.curbs === "Very High") { bsr = "25-35"; bst = "300-500"; }
     if (track.minFRH) bst = "Increase Rate / Lower Range";
     advice.push({
         title: "Bumpstops",
-        text: `Front Range: <strong>${bsr}</strong><br>Front Rate: <strong>${bst}</strong>`
+        text: 'Front Range: <strong>' + bsr + '</strong><br>Front Rate: <strong>' + bst + '</strong>'
     });
 
     // 9. Brake Hardware
-    const pad = durationMins > 90 ? "Pad 2" : "Pad 1";
-    let duct = durationMins > 60 ? "Duct 3" : "Duct 2";
+    var pad = durationMins > 90 ? "Pad 2" : "Pad 1";
+    var duct = durationMins > 60 ? "Duct 3" : "Duct 2";
     if (track.brakeWear === 3) duct = "Duct 4+";
     advice.push({
         title: "Brake Hardware",
-        text: `Use <strong>${pad}</strong>. Ducts: <strong>${duct}</strong>.`
+        text: 'Use <strong>' + pad + '</strong>. Ducts: <strong>' + duct + '</strong>.'
     });
 
-    // 10. Steering & FFB
+    // 10. Steering and FFB
     advice.push({
-        title: "Steering & FFB",
+        title: "Steering and FFB",
         text: car.enginePos === "Front"
             ? "Heavy nose numbs FFB on gear wheels. Trail brake deep to rotate."
             : "Rely on aero balance. Avoid over-driving front tires."
@@ -1109,12 +1109,12 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     return advice;
 }
 
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // RENDERING
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function flashResults() {
     D.resultsCard.classList.remove('result-flash');
-    void D.resultsCard.offsetWidth; // force reflow
+    void D.resultsCard.offsetWidth;
     D.resultsCard.classList.add('result-flash');
 }
 
@@ -1186,18 +1186,18 @@ function renderResults(res) {
     flashResults();
 }
 
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // MAIN UPDATE PIPELINE
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function update() {
-    const inp = getInputs();
-    const result = computeStrategy(inp);
+    var inp = getInputs();
+    var result = computeStrategy(inp);
     renderResults(result);
 }
 
 function updateFuelEstimate() {
-    const track = TRACK_DATA.find(t => t.name === D.track.value);
-    const car = CAR_DATA.find(c => c.name === D.car.value);
+    var track = TRACK_DATA.find(function(t) { return t.name === D.track.value; });
+    var car = CAR_DATA.find(function(c) { return c.name === D.car.value; });
     if (track && car) {
         D.fuelPerLap.value = (track.baseFuel * car.factor).toFixed(2);
         D.avgLapTime.value = formatLapTime(track.lapTimeSeconds);
@@ -1208,106 +1208,80 @@ function updateFuelEstimate() {
 function debouncedSaveAndUpdate() {
     if (suppressPitEvents) return;
     clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => { saveSettings(); }, 500);
+    saveTimeout = setTimeout(function() { saveSettings(); }, 500);
     update();
 }
 
-// ═══════════════════════════════════════════════════════════
-// EVENT BINDING (no inline handlers)
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
+// EVENT BINDING
+// ===============================================================
 function bindEvents() {
-    // Track/Car trigger fuel estimate recalc
-    D.track.addEventListener('change', () => { updateFuelEstimate(); debouncedSaveAndUpdate(); });
-    D.car.addEventListener('change', () => { updateFuelEstimate(); debouncedSaveAndUpdate(); });
+    D.track.addEventListener('change', function() { updateFuelEstimate(); debouncedSaveAndUpdate(); });
+    D.car.addEventListener('change', function() { updateFuelEstimate(); debouncedSaveAndUpdate(); });
 
-    // All other inputs trigger save + recalc
-    const inputs = [
+    var inputs = [
         D.fuelStrategy, D.avgLapTime, D.fuelPerLap, D.raceDuration,
         D.maxStintTime, D.pitStops, D.safetyLaps, D.pitLossTime,
         D.ambientTemp, D.rake, D.elec
     ];
-    inputs.forEach(el => {
+    inputs.forEach(function(el) {
         el.addEventListener('input', debouncedSaveAndUpdate);
         el.addEventListener('change', debouncedSaveAndUpdate);
     });
 
-    // Checkboxes
-    [D.refuel, D.tires, D.swap].forEach(el => {
+    [D.refuel, D.tires, D.swap].forEach(function(el) {
         el.addEventListener('change', debouncedSaveAndUpdate);
     });
 }
 
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // UPDATE NOTIFICATION BANNER
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function showUpdateBanner(worker) {
-    // Don't show duplicate banners
     if (document.getElementById('update-banner')) return;
 
-    const banner = document.createElement('div');
+    var banner = document.createElement('div');
     banner.id = 'update-banner';
-    banner.style.cssText = `
-        position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
-        background: #161b22; border: 1px solid #58a6ff; border-radius: 0.75rem;
-        padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem;
-        box-shadow: 0 0 20px rgba(88,166,255,0.3); z-index: 9999;
-        font-family: Inter, sans-serif; color: #c9d1d9; font-size: 0.875rem;
-        max-width: 90vw;
-    `;
-    banner.innerHTML = `
-        <span>
-            <strong style="color:#58a6ff;">Update Available</strong><br>
-            <span style="font-size:0.75rem;color:#8b949e;">
-                A new version of ACC Strategist is ready.
-            </span>
-        </span>
-        <button id="update-btn" style="
-            padding: 0.5rem 1rem; background: #238636; color: white;
-            border: none; border-radius: 0.5rem; cursor: pointer;
-            font-weight: 600; white-space: nowrap; font-size: 0.875rem;
-        ">Update Now</button>
-        <button id="dismiss-btn" style="
-            padding: 0.5rem; background: none; border: none;
-            color: #8b949e; cursor: pointer; font-size: 1.25rem; line-height: 1;
-        ">&times;</button>
-    `;
+    banner.style.cssText = 'position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#161b22;border:1px solid #58a6ff;border-radius:0.75rem;padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;box-shadow:0 0 20px rgba(88,166,255,0.3);z-index:9999;font-family:Inter,sans-serif;color:#c9d1d9;font-size:0.875rem;max-width:90vw;';
+    banner.innerHTML = '<span><strong style="color:#58a6ff;">Update Available</strong><br>'
+        + '<span style="font-size:0.75rem;color:#8b949e;">A new version of ACC Strategist is ready.</span></span>'
+        + '<button id="update-btn" style="padding:0.5rem 1rem;background:#238636;color:white;border:none;border-radius:0.5rem;cursor:pointer;font-weight:600;white-space:nowrap;font-size:0.875rem;">Update Now</button>'
+        + '<button id="dismiss-btn" style="padding:0.5rem;background:none;border:none;color:#8b949e;cursor:pointer;font-size:1.25rem;line-height:1;">&times;</button>';
 
     document.body.appendChild(banner);
 
-    document.getElementById('update-btn').addEventListener('click', () => {
+    document.getElementById('update-btn').addEventListener('click', function() {
         worker.postMessage('SKIP_WAITING');
         banner.remove();
     });
 
-    document.getElementById('dismiss-btn').addEventListener('click', () => {
+    document.getElementById('dismiss-btn').addEventListener('click', function() {
         banner.remove();
     });
 }
 
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 // INITIALIZATION
-// ═══════════════════════════════════════════════════════════
+// ===============================================================
 function init() {
     D.footerVersion.textContent = 'v' + APP_VERSION;
 
-    // Populate dropdowns
-    TRACK_DATA.sort((a, b) => a.name.localeCompare(b.name))
-        .forEach(t => D.track.add(new Option(t.name, t.name)));
-    CAR_DATA.sort((a, b) => a.name.localeCompare(b.name))
-        .forEach(c => D.car.add(new Option(c.name, c.name)));
+    TRACK_DATA.sort(function(a, b) { return a.name.localeCompare(b.name); })
+        .forEach(function(t) { D.track.add(new Option(t.name, t.name)); });
+    CAR_DATA.sort(function(a, b) { return a.name.localeCompare(b.name); })
+        .forEach(function(c) { D.car.add(new Option(c.name, c.name)); });
 
-    // Load saved settings or use defaults
-    const loaded = loadSettings();
+    var loaded = loadSettings();
     if (!loaded) {
-        updateFuelEstimate(); // set defaults from first track/car
+        updateFuelEstimate();
     }
 
-    // Migrate old cookie if present (one-time)
+    // Migrate old cookie
     try {
-        const oldCookie = document.cookie.split(';')
-            .find(c => c.trim().startsWith('acc_strategy_settings_v17='));
+        var oldCookie = document.cookie.split(';')
+            .find(function(c) { return c.trim().startsWith('acc_strategy_settings_v17='); });
         if (oldCookie && !loaded) {
-            const old = JSON.parse(oldCookie.split('=').slice(1).join('='));
+            var old = JSON.parse(oldCookie.split('=').slice(1).join('='));
             D.track.value = old.track || D.track.value;
             D.car.value = old.car || D.car.value;
             D.fuelStrategy.value = old.fuelStrategy || 'equal';
@@ -1323,40 +1297,37 @@ function init() {
             D.refuel.checked = old.refuel !== false;
             D.tires.checked = old.tires !== false;
             D.swap.checked = old.swap !== false;
-            // Clear old cookie
             document.cookie = 'acc_strategy_settings_v17=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';
-            saveSettings(); // persist to localStorage
+            saveSettings();
         }
     } catch(e) {}
 
     bindEvents();
     update();
-    // ── Service Worker Registration ──
+
+    // Service Worker Registration
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION)
-            .then(reg => {
+            .then(function(reg) {
                 console.log('[App] SW registered, scope:', reg.scope);
 
-                // Check for updates every 30 minutes
-                setInterval(() => reg.update(), 30 * 60 * 1000);
+                setInterval(function() { reg.update(); }, 30 * 60 * 1000);
 
-                // Listen for new SW waiting to activate
-                reg.addEventListener('updatefound', () => {
-                    const newWorker = reg.installing;
+                reg.addEventListener('updatefound', function() {
+                    var newWorker = reg.installing;
                     if (!newWorker) return;
 
-                    newWorker.addEventListener('statechange', () => {
+                    newWorker.addEventListener('statechange', function() {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             showUpdateBanner(newWorker);
                         }
                     });
                 });
             })
-            .catch(err => console.warn('[App] SW registration failed:', err));
+            .catch(function(err) { console.warn('[App] SW registration failed:', err); });
 
-        // When a new SW takes over, reload for fresh assets
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
             if (!refreshing) {
                 refreshing = true;
                 location.reload();
