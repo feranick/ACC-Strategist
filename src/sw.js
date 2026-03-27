@@ -10,7 +10,7 @@ const PRECACHE_URLS = [
     './',
     './index.html',
     './manifest.json',
-    './favicon.ico',
+    './icon.ico',
     './icon.png',
     './icon192.png',
     // Google Fonts (cached on first load via runtime caching below)
