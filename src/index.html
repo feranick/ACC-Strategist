@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="description" content="ACC Race Strategy & Setup Engineering Assistant for Assetto Corsa Competizione">
-    <link rel="icon" type="image/x-icon" href="./icon.png">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="icon" href="./icon.png">
+    <link rel="apple-touch-icon" href="./icon192.png">
     <link rel="manifest" href="./manifest.json">
     <title>ACC Strategist</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
@@ -220,7 +221,15 @@
                     Wear estimates based on track surface, car weight distribution, compound, and temperature.
                     Actual wear depends on driving style and setup.
                 </p>
-                <div id="tireSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+                <div id="tireSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
+                
+                <div id="tirePlotContainer" class="mb-6 bg-gray-800/30 p-4 rounded-lg border border-gray-700 hidden">
+                    <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Degradation Plot</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="tireChart"></canvas>
+                    </div>
+                </div>
+
                 <div id="tireStints" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
@@ -239,8 +248,11 @@
 // ===============================================================
 // CONSTANTS & DATA
 // ===============================================================
-const APP_VERSION = '2026.03.30.1';
+const APP_VERSION = '2026.04.04.2';
 const STORAGE_KEY = 'acc_strategy_v2';
+
+// Set Chart.js global font
+Chart.defaults.font.family = 'Inter, sans-serif';
 
 const TRACK_DATA = [
   {name:"Barcelona",lapTimeSeconds:105,baseFuel:3.0,aero:"High",curbs:"Med",brakeWear:2,rakeDiff:25,wing:"9-11"},
@@ -269,29 +281,31 @@ const TRACK_DATA = [
   {name:"Zolder",lapTimeSeconds:90,baseFuel:2.6,aero:"Med",curbs:"Extreme",brakeWear:3,rakeDiff:20,wing:"5-7"}
 ];
 
+// Cars updated with strict ACC physical bounds
 const CAR_DATA = [
-  {name:"Aston Martin V8 Vantage",factor:1.0,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Audi R8 LMS EVO II",factor:1.02,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Bentley Continental",factor:1.08,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"BMW M4 GT3",factor:0.94,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
-  {name:"BMW M6 GT3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
-  {name:"Ferrari 296 GT3",factor:0.96,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:52,elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
-  {name:"Ferrari 488 EVO",factor:1.0,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
-  {name:"Ford Mustang GT3",factor:1.1,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Honda NSX EVO",factor:0.96,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Jaguar G3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,elec:{tc:4,tc2:null,abs:4,hasTC2:false}},
-  {name:"Lamborghini Huracán EVO 2",factor:1.03,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Lexus RC F GT3",factor:1.06,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"McLaren 720S EVO",factor:0.95,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,elec:{tc:2,tc2:null,abs:2,hasTC2:false}},
-  {name:"Mercedes-AMG EVO",factor:1.04,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"3",rakeSens:false,baseFRH:54,elec:{tc:3,tc2:null,abs:2,hasTC2:false}},
-  {name:"Nissan GT-R 2018",factor:1.07,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Porsche 991 GT3 R",factor:0.95,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,elec:{tc:4,tc2:null,abs:3,hasTC2:false}},
-  {name:"Porsche 992 GT3 R",factor:0.93,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:50,elec:{tc:4,tc2:null,abs:3,hasTC2:false}}
+  {name:"Aston Martin V8 Vantage",factor:1.0,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:90,maxWing:11,maxTC:8,maxABS:8,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"Audi R8 LMS EVO II",factor:1.02,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:75,maxRRH:85,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"Bentley Continental",factor:1.08,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:55,maxFRH:80,maxRRH:95,maxWing:11,maxTC:11,maxABS:11,optBB:"58.0% - 62.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"BMW M4 GT3",factor:0.94,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,maxWing:11,maxTC:10,maxABS:10,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
+  {name:"BMW M6 GT3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:55,maxFRH:80,maxRRH:105,maxWing:11,maxTC:11,maxABS:11,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
+  {name:"Ferrari 296 GT3",factor:0.96,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:70,maxRRH:80,maxWing:11,maxTC:12,maxABS:12,optBB:"51.0% - 53.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
+  {name:"Ferrari 488 EVO",factor:1.0,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:70,maxRRH:85,maxWing:11,maxTC:12,maxABS:12,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
+  {name:"Ford Mustang GT3",factor:1.1,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:100,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"Honda NSX EVO",factor:0.96,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:75,maxRRH:85,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"Jaguar G3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:90,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:4,tc2:null,abs:4,hasTC2:false}},
+  {name:"Lamborghini Huracán EVO 2",factor:1.03,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:75,maxRRH:85,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"Lexus RC F GT3",factor:1.06,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:95,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"McLaren 720S EVO",factor:0.95,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:70,maxRRH:85,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:null,abs:2,hasTC2:false}},
+  {name:"Mercedes-AMG EVO",factor:1.04,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"3",rakeSens:false,baseFRH:54,minFRH:50,maxFRH:75,maxRRH:85,maxWing:11,maxTC:11,maxABS:11,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:2,hasTC2:false}},
+  {name:"Nissan GT-R 2018",factor:1.07,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:90,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"Porsche 991 GT3 R",factor:0.95,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:75,maxRRH:105,maxWing:11,maxTC:11,maxABS:11,optBB:"48.0% - 50.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}},
+  {name:"Porsche 992 GT3 R",factor:0.93,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:50,minFRH:50,maxFRH:75,maxRRH:95,maxWing:12,maxTC:11,maxABS:11,optBB:"49.0% - 52.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}}
 ];
 
 // ===============================================================
 // TIRE WEAR MODEL
 // ===============================================================
+
 const TRACK_TIRE_WEAR = {
     "Barcelona": 1.1, "Brands Hatch": 1.3, "COTA": 1.0, "Donington": 1.2,
     "Hungaroring": 0.9, "Imola": 1.1, "Indianapolis": 0.8, "Kyalami": 1.1,
@@ -347,7 +361,7 @@ const D = {};
 ['track','car','fuelStrategy','avgLapTime','fuelPerLap','raceDuration',
  'maxStintTime','pitStops','safetyLaps','pitLossTime','ambientTemp',
  'totalLaps','totalFuel','calculatedPits','totalPitLoss','strategyType',
- 'stintDetails','setupAdvice','resultsCard','message', 'tireStints', 'tireSummary'].forEach(id => {
+ 'stintDetails','setupAdvice','resultsCard','message', 'tireStints', 'tireSummary', 'tirePlotContainer'].forEach(id => {
     D[id] = document.getElementById(id);
 });
 D.rake = document.getElementById('rakeAggressiveness');
@@ -359,6 +373,7 @@ D.footerVersion = document.getElementById('footer-version');
 
 let saveTimeout;
 let suppressPitEvents = false;
+let tireChartInstance = null;
 
 // ===============================================================
 // PARSING
@@ -644,7 +659,6 @@ function computeTireStrategy(strategyResult, inp) {
         let reason = "";
         let urgency = "none";
 
-        // Evaluate whether we need to change tires BEFORE calculating wear for this stint
         if (idx === 0) {
             reason = "Fresh tires.";
         } else {
@@ -664,21 +678,24 @@ function computeTireStrategy(strategyResult, inp) {
                 
                 if (projectedAgeIfKeep > effectiveLife * 0.9) {
                     changeTires = true;
-                    reason = "Changed tires (old set would drop to " + gripIfKeep + "% grip).";
+                    urgency = "none"; 
+                    reason = `Changed tires (old set would drop to ${gripIfKeep}% grip).`;
                 } else if (projectedAgeIfKeep > effectiveOptEnd) {
                     if (remainingStints <= 1) {
                         changeTires = true;
-                        reason = "Changed for final push.";
+                        urgency = "none";
+                        reason = "Fresh rubber for final push.";
                     } else if (projectedAgeIfKeep > effectiveOptEnd * 1.3) {
                         changeTires = true;
-                        reason = "Changed tires (old set dropping to " + gripIfKeep + "% grip).";
+                        urgency = "none";
+                        reason = `Changed tires (old set dropping to ${gripIfKeep}% grip).`;
                     } else {
-                        // Look ahead to next stint (if current is optional)
                         const nextStint = strategyResult.stints[idx + 1];
                         if (nextStint) {
                             const nextMins = nextStint.timeMins || (nextStint.laps * inp.lapTime / 60);
                             if (projectedAgeIfKeep + nextMins > effectiveLife * 0.9) {
                                 changeTires = true;
+                                urgency = "none";
                                 reason = "Changed to avoid critical wear in the next stint.";
                             } else {
                                 urgency = "optional";
@@ -695,35 +712,45 @@ function computeTireStrategy(strategyResult, inp) {
             }
         }
 
-        // Apply tire change before running the stint simulation
-        // (Resets the age and the UI urgency so the new stint is framed as safe)
         if (changeTires) {
             tireAge = 0;
             tireSet++;
             urgency = "none"; 
         }
 
-        // Now calculate stats for THIS stint
-        const projectedAge = tireAge + stintMins;
-        const gripStart = estimateGrip(tireAge, effectiveOptEnd, effectiveLife);
-        const gripEnd = estimateGrip(projectedAge, effectiveOptEnd, effectiveLife);
-        
-        const fWear = clampVal(Math.round(100 - (projectedAge * effectiveWearRate * engineBias.front * 1.5)), 0, 100);
-        const rWear = clampVal(Math.round(100 - (projectedAge * effectiveWearRate * engineBias.rear * 1.5)), 0, 100);
+        const actualProjectedAge = tireAge + stintMins;
+        const actualGripStart = estimateGrip(tireAge, effectiveOptEnd, effectiveLife);
+        const actualGripEnd = estimateGrip(actualProjectedAge, effectiveOptEnd, effectiveLife);
+
+        const fWearStart = clampVal(Math.round(100 - (tireAge * effectiveWearRate * engineBias.front * 1.5)), 0, 100);
+        const rWearStart = clampVal(Math.round(100 - (tireAge * effectiveWearRate * engineBias.rear * 1.5)), 0, 100);
+        const fWear = clampVal(Math.round(100 - (actualProjectedAge * effectiveWearRate * engineBias.front * 1.5)), 0, 100);
+        const rWear = clampVal(Math.round(100 - (actualProjectedAge * effectiveWearRate * engineBias.rear * 1.5)), 0, 100);
 
         ts.stints.push({
             stintIndex: idx, stintLaps: stint.laps, stintMins: stintMins,
-            tireAgeStart: tireAge, tireAgeEnd: projectedAge, gripStart: gripStart,
-            gripEnd: gripEnd, frontWear: fWear, rearWear: rWear,
+            tireAgeStart: tireAge, tireAgeEnd: actualProjectedAge, gripStart: actualGripStart,
+            gripEnd: actualGripEnd, frontWearStart: fWearStart, rearWearStart: rWearStart,
+            frontWear: fWear, rearWear: rWear,
             changeTires: changeTires, reason: reason, urgency: urgency,
             tireSet: tireSet, compound: compound
         });
 
-        // Update tire age for the start of the next stint
-        tireAge = projectedAge;
+        tireAge = actualProjectedAge;
     });
 
     ts.valid = true;
+
+    for (let i = 0; i < ts.stints.length - 1; i++) {
+        if (ts.stints[i].urgency === "optional") {
+            const next = ts.stints[i + 1];
+            if (next.urgency === "critical" || next.urgency === "recommended") {
+                ts.stints[i].urgency = "none";
+                ts.stints[i].changeTires = true;
+                ts.stints[i].reason = "Changed to avoid critical wear in the next stint.";
+            }
+        }
+    }
 
     ts.overallAdvice.push("Compound: <strong>" + getCompoundFullName(compound) + "</strong> (" + temp + "°C ambient)");
     const totalSets = ts.stints.reduce((max, s) => Math.max(max, s.tireSet), 1);
@@ -736,6 +763,105 @@ function computeTireStrategy(strategyResult, inp) {
     else if (car.enginePos === "Rear") ts.overallAdvice.push("<span class='text-yellow-400'>Rear-engine:</span> Monitor rear temps. Expect higher rear degradation.");
 
     return ts;
+}
+
+// ===============================================================
+// CHART DRAWING
+// ===============================================================
+
+function drawTireChart(ts) {
+    const ctx = document.getElementById('tireChart');
+    if (!ctx) return;
+    
+    if (tireChartInstance) {
+        tireChartInstance.destroy();
+        tireChartInstance = null;
+    }
+
+    let currentTime = 0;
+    const gripData = [];
+    const fWearData = [];
+    const rWearData = [];
+
+    ts.stints.forEach(s => {
+        gripData.push({ x: currentTime, y: s.gripStart });
+        fWearData.push({ x: currentTime, y: s.frontWearStart });
+        rWearData.push({ x: currentTime, y: s.rearWearStart });
+
+        currentTime += s.stintMins;
+        
+        gripData.push({ x: currentTime, y: s.gripEnd });
+        fWearData.push({ x: currentTime, y: s.frontWear });
+        rWearData.push({ x: currentTime, y: s.rearWear });
+    });
+
+    tireChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Overall Grip',
+                    data: gripData,
+                    borderColor: '#4ade80',
+                    backgroundColor: '#4ade80',
+                    showLine: true,
+                    tension: 0,
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#0d1117'
+                },
+                {
+                    label: 'Front Wear',
+                    data: fWearData,
+                    borderColor: '#60a5fa',
+                    backgroundColor: '#60a5fa',
+                    showLine: true,
+                    borderDash: [5, 5],
+                    tension: 0,
+                    borderWidth: 2,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Rear Wear',
+                    data: rWearData,
+                    borderColor: '#c084fc',
+                    backgroundColor: '#c084fc',
+                    showLine: true,
+                    borderDash: [5, 5],
+                    tension: 0,
+                    borderWidth: 2,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: { display: true, text: 'Driving Time (mins)', color: '#8b949e' },
+                    grid: { color: '#30363d' },
+                    ticks: { color: '#8b949e' }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    title: { display: true, text: 'Life / Grip (%)', color: '#8b949e' },
+                    grid: { color: '#30363d' },
+                    ticks: { color: '#8b949e' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#c9d1d9', boxWidth: 12, usePointStyle: true } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y + '%'; }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function gripColor(pct) {
@@ -778,8 +904,12 @@ function renderTireStrategy(ts) {
     if (!ts.valid || ts.stints.length === 0) {
         D.tireStints.innerHTML = '<p class="text-gray-500 italic">No tire data available.</p>';
         D.tireSummary.innerHTML = '';
+        D.tirePlotContainer.classList.add('hidden');
         return;
     }
+
+    D.tirePlotContainer.classList.remove('hidden');
+    drawTireChart(ts);
 
     D.tireSummary.innerHTML = ts.overallAdvice.map(a => '<div class="p-2 rounded bg-gray-800/50 border border-gray-700 text-sm">' + a + '</div>').join('');
 
@@ -798,7 +928,7 @@ function renderTireStrategy(ts) {
             + '<div class="mb-2">' + buildGripBar(s.gripStart, s.gripEnd) + '</div>'
             + '<div class="mb-2">' + buildWearBars(s.frontWear, s.rearWear) + '</div>'
             + '<p class="text-xs text-gray-400">' + Math.round(s.stintMins) + ' min | Age: ' + Math.round(s.tireAgeStart) + '→' + Math.round(s.tireAgeEnd) + ' min</p>'
-            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#9ca3af') + '">' + s.reason + '</p>'
+            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#6b7280') + '">' + s.reason + '</p>'
             + '</div>';
     }).join('');
 }
@@ -812,19 +942,26 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     var elecMode = inp.elecProfile;
     var temp = inp.ambientTemp;
     var rakeMod = 0, wingMod = 0;
+    
     if (aggro === 'moderate') { rakeMod = 5; wingMod = 1; }
     if (aggro === 'aggressive') { rakeMod = 10; wingMod = 2; }
 
+    // 1. Tire Pressures
     var calcCold = 25.0 - ((temp - 20) * 0.1);
+    calcCold = clampVal(calcCold, 20.0, 28.5);
     advice.push({
         title: "Tire Pressures",
         text: 'Cold: <strong>' + (calcCold - 0.2).toFixed(1) + '-' + (calcCold + 0.2).toFixed(1) + ' PSI</strong><br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0</span>'
     });
 
+    // 2. Electronics
+    var maxTC = car.maxTC || 11;
+    var maxABS = car.maxABS || 11;
     var tc = car.elec.tc;
     var tc2 = car.elec.tc2;
     var abs = car.elec.abs;
     var elecNote = "";
+    
     if (elecMode === 'safe') {
         tc += 2; abs += 2;
         if (car.elec.hasTC2) tc2 += 2;
@@ -836,54 +973,99 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     } else {
         elecNote = "Aggressive. Minimal aids.";
     }
+    
     if (track.curbs === "Extreme" || track.curbs === "Very High") {
         abs += 1;
         elecNote += ' <span class="text-yellow-400 text-[10px]">+1 ABS curbs</span>';
     }
+    
+    tc = clampVal(tc, 0, maxTC);
+    abs = clampVal(abs, 0, maxABS);
+    if (car.elec.hasTC2) tc2 = clampVal(tc2, 0, maxTC);
+
     var mapNum = car.mapRace;
     if (durationMins > 90 && inp.fuelStrategy === 'minimal') mapNum = car.mapFuel;
     var eTxt = 'Map: <strong>' + mapNum + '</strong> | ABS: <strong>' + abs + '</strong><br>TC1: <strong>' + tc + '</strong>';
     if (car.elec.hasTC2) eTxt += ' | TC2: <strong>' + tc2 + '</strong>';
+    
     advice.push({
         title: "Electronics",
         text: eTxt + '<br><span class="text-[10px] text-gray-500">' + elecNote + '</span>'
     });
 
+    // 3. Rear Wing
+    var maxW = car.maxWing || 11;
+    var wParts = track.wing.split('-');
+    var wMin = clampVal(parseInt(wParts[0]) + wingMod, 0, maxW);
+    var wMax = wParts.length > 1 ? clampVal(parseInt(wParts[1]) + wingMod, 0, maxW) : wMin;
+    var finalWing = wMin === wMax ? wMin : (wMin + "-" + wMax);
+    var wingNote = wingMod > 0 ? ('<br><span class="text-[10px] text-gray-500">+' + wingMod + ' for ' + aggro + ' rake</span>') : '<br><span class="text-[10px] text-gray-500">Standard setup</span>';
+    
+    if (wMax === maxW && (parseInt(wParts[1] || wParts[0]) + wingMod > maxW)) {
+        wingNote += ' <span class="text-yellow-400 text-[10px] font-bold">[Capped at ' + maxW + ']</span>';
+    }
+    
     advice.push({
         title: "Rear Wing",
-        text: 'Base: <strong>' + track.wing + '</strong>. ' + (wingMod > 0 ? '+' + wingMod + ' for ' + aggro + ' rake.' : 'Standard.')
+        text: 'Setting: <strong>' + finalWing + '</strong>' + wingNote
     });
 
-    var diff = track.rakeDiff + rakeMod;
+    // 4. Ride Heights
+    var minF = car.minFRH || 50;
+    var maxF = car.maxFRH || 75;
     var refFront = car.baseFRH;
     var compNote = "";
+    
     if (track.minFRH && refFront < track.minFRH) {
         refFront = track.minFRH;
-        compNote = '<br><span class="text-yellow-400 text-[10px]">Raised for compression</span>';
+        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">Front raised for track bumps</span>';
     }
-    var rh = 'Front: <strong>' + refFront + 'mm</strong><br>Rear: <strong>' + (refFront + diff) + 'mm</strong>';
+    
+    refFront = clampVal(refFront, minF, maxF);
+    
+    var diff = track.rakeDiff + rakeMod;
+    var maxRear = car.maxRRH || 95;
+    var refRear = refFront + diff;
+    
+    if (refRear > maxRear) {
+        refRear = maxRear;
+        diff = refRear - refFront;
+        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">Rear capped at car limit (' + maxRear + 'mm)</span>';
+    }
+    
+    if (refRear < refFront) {
+        refRear = refFront;
+        diff = 0;
+    }
+    
+    var rh = 'Front: <strong>' + refFront + 'mm</strong><br>Rear: <strong>' + refRear + 'mm</strong>';
     if (car.rakeSens) rh += '<br><span class="text-red-400 text-[10px]">Sensitive Floor</span>';
+    
     advice.push({
         title: "Ride Heights",
         text: rh + compNote + '<br><span class="text-[10px] text-gray-500 font-mono">(Rake +' + diff + 'mm)</span>'
     });
 
+    // 5. Alignment
     advice.push({
         title: "Alignment",
-        text: car.enginePos === "Front" ? '<strong>More Negative Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>' : '<strong>Standard Max Neg Camber</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
+        text: car.enginePos === "Front" ? '<strong>More Negative Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>' : '<strong>Standard Max Neg Camber & Mild Toe</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
     });
 
+    // 6. Anti-Roll Bars
     var arb;
-    if (car.enginePos === "Front") arb = 'F: <strong>Soft 4-5</strong> R: <strong>Stiff 6-7</strong><br><span class="text-[10px] text-gray-500">Cures front understeer</span>';
+    if (car.enginePos === "Front") arb = 'F: <strong>Soft</strong> R: <strong>Stiff</strong><br><span class="text-[10px] text-gray-500">Cures front understeer</span>';
     else if (car.enginePos === "Rear") arb = 'F: <strong>Med-Stiff</strong> R: <strong>Soft</strong><br><span class="text-[10px] text-gray-500">Controls rear pendulum</span>';
     else arb = 'F: <strong>Stiff</strong> R: <strong>Soft-Med</strong><br><span class="text-[10px] text-gray-500">Holds aero platform</span>';
     advice.push({ title: "Anti-Roll Bars", text: arb });
 
+    // 7. Brake Bias
     advice.push({
         title: "Brake Bias",
-        text: car.enginePos === "Front" ? '<strong>53.5%-54.5%</strong><br><span class="text-[10px] text-gray-500">Rearward for trail braking.</span>' : '<strong>56.0%-58.0%</strong><br><span class="text-[10px] text-gray-500">Standard forward bias.</span>'
+        text: '<strong>' + (car.optBB || "54.0% - 56.0%") + '</strong><br><span class="text-[10px] text-gray-500">Optimal starting range.</span>'
     });
 
+    // 8. Bumpstops
     var bsr = "10-15", bst = "800-1000";
     if (aggro === 'aggressive') { bsr = "2-6"; bst = "1500-2000"; }
     else if (aggro === 'moderate') { bsr = "6-12"; bst = "1200-1500"; }
@@ -891,9 +1073,10 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     if (track.minFRH) bst = "Increase Rate / Lower Range";
     advice.push({
         title: "Bumpstops",
-        text: 'Front Range: <strong>' + bsr + '</strong><br>Front Rate: <strong>' + bst + '</strong>'
+        text: 'Front Range: <strong>' + bsr + '</strong><br>Front Rate: <strong>' + bst + ' N/m</strong>'
     });
 
+    // 9. Brake Hardware
     var pad = durationMins > 90 ? "Pad 2" : "Pad 1";
     var duct = durationMins > 60 ? "Duct 3" : "Duct 2";
     if (track.brakeWear === 3) duct = "Duct 4+";
@@ -902,6 +1085,7 @@ function generateSetupAdvice(track, car, durationMins, inp) {
         text: 'Use <strong>' + pad + '</strong>. Ducts: <strong>' + duct + '</strong>.'
     });
 
+    // 10. Steering & FFB
     advice.push({
         title: "Steering and FFB",
         text: car.enginePos === "Front" ? "Heavy nose numbs FFB on gear wheels. Trail brake deep to rotate." : "Rely on aero balance. Avoid over-driving front tires."
