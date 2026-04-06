@@ -139,7 +139,6 @@
                         <label for="rakeAggressiveness" class="block text-sm font-medium mb-1 text-gray-400">Aero Rake</label>
                         <select id="rakeAggressiveness" class="w-full p-2 rounded-lg">
                             <option value="default">Default</option>
-                            <option value="standard">Standard</option>
                             <option value="moderate">Moderate</option>
                             <option value="aggressive">Aggressive</option>
                         </select>
@@ -249,7 +248,7 @@
 // ===============================================================
 // CONSTANTS & DATA
 // ===============================================================
-const APP_VERSION = '2026.04.05.1';
+const APP_VERSION = '2026.04.05.3';
 const STORAGE_KEY = 'acc_strategy_v2';
 
 // Set Chart.js global font
@@ -282,25 +281,25 @@ const TRACK_DATA = [
   {name:"Zolder",lapTimeSeconds:90,baseFuel:2.6,aero:"Med",curbs:"Extreme",brakeWear:3,rakeDiff:20,wing:"5-7"}
 ];
 
-// Cars updated with strict ACC physical bounds
+// Cars updated with corrected, realistic ACC physical bounds for maxRRH to allow rake modifiers room to work
 const CAR_DATA = [
-  {name:"Aston Martin V8 Vantage",factor:1.0,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:70,maxRRH:90,maxWing:11,maxTC:8,maxABS:8,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Audi R8 LMS EVO II",factor:1.02,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:65,maxRRH:85,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Bentley Continental",factor:1.08,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:50,maxFRH:75,maxRRH:100,maxWing:11,maxTC:11,maxABS:11,optBB:"58.0% - 62.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"BMW M4 GT3",factor:0.94,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,maxWing:11,maxTC:10,maxABS:10,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
-  {name:"BMW M6 GT3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:50,maxFRH:75,maxRRH:110,maxWing:11,maxTC:11,maxABS:11,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
-  {name:"Ferrari 296 GT3",factor:0.96,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:65,maxRRH:75,maxWing:11,maxTC:12,maxABS:12,optBB:"51.0% - 53.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
-  {name:"Ferrari 488 EVO",factor:1.0,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:70,maxRRH:85,maxWing:11,maxTC:12,maxABS:12,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
-  {name:"Ford Mustang GT3",factor:1.1,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:105,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Honda NSX EVO",factor:0.96,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:70,maxRRH:90,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Jaguar G3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:90,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:4,tc2:null,abs:4,hasTC2:false}},
-  {name:"Lamborghini Huracán EVO 2",factor:1.03,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:65,maxRRH:85,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Lexus RC F GT3",factor:1.06,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:95,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"McLaren 720S EVO",factor:0.95,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:65,maxRRH:80,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:null,abs:2,hasTC2:false}},
-  {name:"Mercedes-AMG EVO",factor:1.04,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"3",rakeSens:false,baseFRH:54,minFRH:50,maxFRH:75,maxRRH:85,maxWing:11,maxTC:11,maxABS:11,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:2,hasTC2:false}},
-  {name:"Nissan GT-R 2018",factor:1.07,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:95,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Porsche 991 GT3 R",factor:0.95,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:70,maxRRH:115,maxWing:11,maxTC:11,maxABS:11,optBB:"48.0% - 50.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}},
-  {name:"Porsche 992 GT3 R",factor:0.93,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:50,minFRH:50,maxFRH:70,maxRRH:110,maxWing:12,maxTC:11,maxABS:11,optBB:"49.0% - 52.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}}
+  {name:"Aston Martin V8 Vantage",factor:1.0,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:70,maxRRH:115,minRRH:63,maxWing:11,maxTC:8,maxABS:8,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"Audi R8 LMS EVO II",factor:1.02,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:65,maxRRH:115,minRRH:60,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"Bentley Continental",factor:1.08,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:50,maxFRH:75,maxRRH:120,minRRH:65,maxWing:11,maxTC:11,maxABS:11,optBB:"58.0% - 62.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"BMW M4 GT3",factor:0.94,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,minRRH:63,maxWing:11,maxTC:10,maxABS:10,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
+  {name:"BMW M6 GT3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:50,maxFRH:75,maxRRH:120,minRRH:65,maxWing:11,maxTC:11,maxABS:11,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
+  {name:"Ferrari 296 GT3",factor:0.96,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:65,maxRRH:86,minRRH:55,maxWing:11,maxTC:12,maxABS:12,optBB:"51.0% - 53.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
+  {name:"Ferrari 488 EVO",factor:1.0,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:70,maxRRH:90,minRRH:55,maxWing:11,maxTC:12,maxABS:12,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
+  {name:"Ford Mustang GT3",factor:1.1,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,minRRH:63,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"Honda NSX EVO",factor:0.96,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:70,maxRRH:105,minRRH:58,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"Jaguar G3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:110,minRRH:63,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:4,tc2:null,abs:4,hasTC2:false}},
+  {name:"Lamborghini Huracán EVO 2",factor:1.03,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:65,maxRRH:115,minRRH:60,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"Lexus RC F GT3",factor:1.06,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,minRRH:63,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
+  {name:"McLaren 720S EVO",factor:0.95,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:65,maxRRH:90,minRRH:55,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:null,abs:2,hasTC2:false}},
+  {name:"Mercedes-AMG EVO",factor:1.04,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"3",rakeSens:false,baseFRH:54,minFRH:50,maxFRH:75,maxRRH:110,minRRH:60,maxWing:11,maxTC:11,maxABS:11,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:2,hasTC2:false}},
+  {name:"Nissan GT-R 2018",factor:1.07,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:110,minRRH:60,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
+  {name:"Porsche 991 GT3 R",factor:0.95,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:70,maxRRH:120,minRRH:60,maxWing:11,maxTC:11,maxABS:11,optBB:"48.0% - 50.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}},
+  {name:"Porsche 992 GT3 R",factor:0.93,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:50,minFRH:50,maxFRH:70,maxRRH:120,minRRH:60,maxWing:12,maxTC:11,maxABS:11,optBB:"49.0% - 52.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}}
 ];
 
 // ===============================================================
@@ -1014,48 +1013,59 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     // 4. Ride Heights (WITH SMART ADJUSTMENT)
     var minF = car.minFRH || 50;
     var maxF = car.maxFRH || 75;
+    var maxRear = car.maxRRH || 95;
+    var minRear = car.minRRH || 55;
     var refFront = car.baseFRH;
     var compNote = "";
     var targetDiff = track.rakeDiff + rakeMod;
-    
-    var absoluteMinF = minF;
+
+    // True minimum front: max of car floor AND track floor
+    var absoluteMinF = Math.max(minF, track.minFRH || 0);
+
     if (track.minFRH && refFront < track.minFRH) {
         refFront = track.minFRH;
-        absoluteMinF = track.minFRH;
-        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">Front raised for track bumps</span>';
+        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">'
+              + 'Front raised to ' + track.minFRH + 'mm for track bumps</span>';
     }
-    
-    refFront = clampVal(refFront, minF, maxF);
-    
-    var maxRear = car.maxRRH || 95;
+
+    refFront = clampVal(refFront, absoluteMinF, maxF);
+
     var targetRear = refFront + targetDiff;
-    
-    // SMART ADJUSTMENT: If target rear is above max, lower the front to try and hit the desired rake
+
+    // Smart adjustment: lower front to preserve rake if rear overflows
     if (targetRear > maxRear) {
         var excess = targetRear - maxRear;
-        var availableFrontDrop = refFront - absoluteMinF;
-        
-        if (availableFrontDrop > 0) {
-            var dropAmount = Math.min(excess, availableFrontDrop);
-            refFront -= dropAmount;
+        var availableDrop = refFront - absoluteMinF;
+
+        if (availableDrop > 0) {
+            var drop = Math.min(excess, availableDrop);
+            refFront -= drop;
             targetRear = refFront + targetDiff;
-            compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">Front lowered to fit target rake</span>';
         }
     }
-    
-    var refRear = targetRear;
-    var actualDiff = targetDiff;
 
-    // Final physical clamp 
-    if (refRear > maxRear) {
-        refRear = maxRear;
-        actualDiff = refRear - refFront;
-        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">Rear capped at car limit (' + maxRear + 'mm)</span>';
-    }
-    
+    var refRear = clampVal(targetRear, minRear, maxRear);
+    refFront = clampVal(refFront, absoluteMinF, maxF);
+
+    // Prevent negative rake, but also respect minRear
     if (refRear < refFront) {
-        refRear = refFront;
-        actualDiff = 0;
+        // If the rear's physical minimum is above the front, the front must come up
+        if (minRear > refFront) {
+            refFront = Math.min(minRear, maxF);
+            refRear = minRear;
+            compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">'
+                      + 'Front raised to match rear minimum (' + minRear + 'mm)</span>';
+        } else {
+            refRear = refFront;
+        }
+    }
+
+    var actualDiff = refRear - refFront;
+
+    if (actualDiff < targetDiff) {
+        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">'
+                  + 'Target rake +' + targetDiff + 'mm reduced to +'
+                  + actualDiff + 'mm (car limits)</span>';
     }
     
     var rh = 'Front: <strong>' + refFront + 'mm</strong><br>Rear: <strong>' + refRear + 'mm</strong>';
