@@ -10,10 +10,9 @@ const PRECACHE_URLS = [
     './',
     './index.html',
     './manifest.json',
-    './favicon.ico',
-    './icon.png',
-    './icon192.png',
-    // Google Fonts (cached on first load via runtime caching below)
+    './images/favicon.ico',
+    './images/icon.png',
+    './images/icon192.png',
 ];
 
 // External CDN URLs we want to cache at runtime
