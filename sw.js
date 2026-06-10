@@ -1,131 +1,178 @@
 // ═══════════════════════════════════════════════════════════
 // ACC Strategist — Service Worker (Offline Support)
+//
+// Strategy overview:
+//  - Navigations (index.html): NETWORK-FIRST, cache fallback.
+//    This guarantees users pick up new app versions when online,
+//    while still working fully offline. (Cache-first navigations
+//    previously deadlocked the update mechanism.)
+//  - Same-origin static assets: cache-first.
+//  - CDN assets (Tailwind, Chart.js, Google Fonts):
+//    stale-while-revalidate. Chart.js (cdn.jsdelivr.net) is now
+//    included so charts work offline.
+//  - No skipWaiting() on install: the in-app "Update Available"
+//    banner controls activation via the SKIP_WAITING message.
 // ═══════════════════════════════════════════════════════════
 
-const APP_VER = new URL(self.location).searchParams.get('v') || 'unknown';
+const APP_VER = new URL(self.location.href).searchParams.get('v') || '0';
 const CACHE_VERSION = 'acc-strategist-v' + APP_VER;
 
-// Files to cache for full offline support
-const PRECACHE_URLS = [
+// Critical app shell — install fails if these can't be cached
+const PRECACHE_CRITICAL = [
     './',
     './index.html',
-    './manifest.json',
-    './images/favicon.ico',
-    './images/icon.png',
-    './images/icon192.png',
+    './manifest.json'
 ];
 
-// External CDN URLs we want to cache at runtime
+// Nice-to-have assets — cached individually; a missing icon
+// must not break the entire install (cache.addAll is all-or-nothing)
+const PRECACHE_OPTIONAL = [
+    './images/favicon.ico',
+    './images/icon.png',
+    './images/icon192.png'
+];
+
+// External CDN hosts cached at runtime (exact host or subdomain match)
 const CDN_HOSTS = [
     'cdn.tailwindcss.com',
+    'cdn.jsdelivr.net',
     'fonts.googleapis.com',
     'fonts.gstatic.com'
 ];
 
+function isCdnHost(hostname) {
+    // Exact or proper-subdomain match. Avoids the substring trap where
+    // "cdn.tailwindcss.com.evil.example" would match includes().
+    return CDN_HOSTS.some(h => hostname === h || hostname.endsWith('.' + h));
+}
+
 // ───────────────────────────────────────────────────────────
-// INSTALL: Precache core app shell
+// INSTALL: Precache app shell (no skipWaiting — banner-driven)
 // ───────────────────────────────────────────────────────────
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_VERSION)
-            .then(cache => {
-                console.log('[SW] Precaching app shell');
-                return cache.addAll(PRECACHE_URLS);
-            })
-            .then(() => self.skipWaiting()) // Activate immediately
+        caches.open(CACHE_VERSION).then(async cache => {
+            await cache.addAll(PRECACHE_CRITICAL);
+            // Optional assets: best effort, never fail the install
+            await Promise.all(
+                PRECACHE_OPTIONAL.map(url =>
+                    cache.add(url).catch(err =>
+                        console.warn('[SW] Optional precache failed:', url, err)
+                    )
+                )
+            );
+        })
     );
 });
 
 // ───────────────────────────────────────────────────────────
-// ACTIVATE: Clean up old caches
+// ACTIVATE: Clean up old caches, take control
 // ───────────────────────────────────────────────────────────
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames
-                    .filter(name => name !== CACHE_VERSION)
+        caches.keys()
+            .then(names => Promise.all(
+                names
+                    .filter(name => name.startsWith('acc-strategist-') && name !== CACHE_VERSION)
                     .map(name => {
                         console.log('[SW] Deleting old cache:', name);
                         return caches.delete(name);
                     })
-            );
-        }).then(() => self.clients.claim()) // Take control of all pages
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
 // ───────────────────────────────────────────────────────────
-// FETCH: Stale-While-Revalidate for CDN, Cache-First for app
+// FETCH
 // ───────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
+    const request = event.request;
+    if (request.method !== 'GET') return;
 
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') return;
-
-    // Skip chrome-extension and other non-http(s) schemes
+    let url;
+    try { url = new URL(request.url); } catch (e) { return; }
     if (!url.protocol.startsWith('http')) return;
 
-    // CDN resources: Stale-While-Revalidate
-    // Serve from cache immediately, but update cache in background
-    if (CDN_HOSTS.some(host => url.hostname.includes(host))) {
-        event.respondWith(staleWhileRevalidate(event.request));
+    // Navigations: network-first so updates always reach users
+    if (request.mode === 'navigate') {
+        event.respondWith(networkFirstNavigation(request));
         return;
     }
 
-    // App resources: Cache-First, fallback to network
-    if (url.origin === location.origin) {
-        event.respondWith(cacheFirst(event.request));
+    // CDN resources: stale-while-revalidate
+    if (isCdnHost(url.hostname)) {
+        event.respondWith(staleWhileRevalidate(request));
         return;
     }
+
+    // Same-origin static assets: cache-first
+    if (url.origin === self.location.origin) {
+        event.respondWith(cacheFirst(request));
+        return;
+    }
+    // Everything else: let the browser handle it normally
 });
 
 // ───────────────────────────────────────────────────────────
 // STRATEGIES
 // ───────────────────────────────────────────────────────────
 
-// Cache-First: Try cache, fall back to network, cache the response
+async function networkFirstNavigation(request) {
+    const cache = await caches.open(CACHE_VERSION);
+    try {
+        const response = await fetch(request);
+        if (response && response.ok) {
+            cache.put(request, response.clone());
+            // Keep './' fresh too, so cold offline starts work
+            cache.put('./', response.clone());
+        }
+        return response;
+    } catch (err) {
+        const cached = await cache.match(request) || await cache.match('./index.html') || await cache.match('./');
+        return cached || offlineFallback();
+    }
+}
+
 async function cacheFirst(request) {
     const cached = await caches.match(request);
     if (cached) return cached;
-
     try {
         const response = await fetch(request);
-        if (response.ok) {
+        if (response && response.ok) {
             const cache = await caches.open(CACHE_VERSION);
             cache.put(request, response.clone());
         }
         return response;
     } catch (err) {
-        // If both cache and network fail, return offline fallback
-        return offlineFallback();
+        // Non-navigation asset failed: return a network error, NOT an
+        // HTML offline page (a failed image fetch must not receive HTML)
+        return Response.error();
     }
 }
 
-// Stale-While-Revalidate: Return cache immediately, update in background
 async function staleWhileRevalidate(request) {
     const cache = await caches.open(CACHE_VERSION);
     const cached = await cache.match(request);
 
-    // Fetch fresh copy in background
     const fetchPromise = fetch(request)
         .then(response => {
-            if (response.ok) {
+            // Cache successful and opaque (no-cors) responses
+            if (response && (response.ok || response.type === 'opaque')) {
                 cache.put(request, response.clone());
             }
             return response;
         })
-        .catch(() => cached); // If network fails, fall back to cached
+        .catch(() => cached);
 
-    // Return cached immediately if available, otherwise wait for network
     return cached || fetchPromise;
 }
 
-// Minimal offline fallback page (only if everything fails)
+// Minimal offline fallback page — navigations only
 function offlineFallback() {
     return new Response(
         `<!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -167,15 +214,18 @@ function offlineFallback() {
 }
 
 // ───────────────────────────────────────────────────────────
-// MESSAGE: Allow manual cache clear from app
+// MESSAGE: update activation & manual cache clear
 // ───────────────────────────────────────────────────────────
 self.addEventListener('message', event => {
     if (event.data === 'SKIP_WAITING') {
         self.skipWaiting();
     }
     if (event.data === 'CLEAR_CACHE') {
-        caches.keys().then(names => {
-            names.forEach(name => caches.delete(name));
-        });
+        // waitUntil so the SW isn't terminated mid-cleanup
+        event.waitUntil(
+            caches.keys().then(names =>
+                Promise.all(names.map(name => caches.delete(name)))
+            )
+        );
     }
 });

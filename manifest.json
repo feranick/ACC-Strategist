@@ -1,4 +1,5 @@
 {
+    "id": "./",
     "name": "ACC Strategist",
     "short_name": "ACC Strat",
     "description": "Race Strategy & Setup Engineering Assistant for Assetto Corsa Competizione",
@@ -14,6 +15,12 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
+        },
+        {
+            "src": "./images/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         },
         {
             "src": "./images/icon192.png",

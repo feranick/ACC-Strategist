@@ -7,66 +7,90 @@
     <meta name="description" content="ACC Race Strategy & Setup Engineering Assistant for Assetto Corsa Competizione">
     <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
     <link rel="icon" href="./images/icon.png">
-    <link rel="apple-touch-icon" href="./icon192.png">
+    <link rel="apple-touch-icon" href="./images/icon192.png">
     <link rel="manifest" href="./manifest.json">
     <title>ACC Strategist</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!--
+      Tailwind Play CDN, pinned to a fixed version for stability.
+      NOTE: the Play CDN is a runtime compiler and not recommended for
+      production by Tailwind; for a small static PWA it is acceptable,
+      but consider a build-time Tailwind output for a lighter page.
+      It is cached by the service worker for offline use.
+    -->
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <!-- Chart.js pinned + SRI. The app degrades gracefully if it fails to load. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.js"
+            integrity="sha384-4W8gMhOYqk0FPg9sAMkb3g/P2fXtzbUyDUUgMlA1EEig8z/U/13EYUjErc1H382b"
+            crossorigin="anonymous"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #0d1117; 
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
         }
-        
-        .card { 
-            background-color: #161b22; 
-            border: 1px solid #30363d; 
+
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
         }
-        
+
         .input-group input[type="text"],
         .input-group input[type="number"],
         .input-group select {
-            background-color: #21262d; 
+            background-color: #21262d;
             border: 1px solid #484f58;
-            color: #c9d1d9; 
+            color: #c9d1d9;
             transition: border-color 0.2s;
         }
-        
+
         .input-group input[type="text"]:focus,
         .input-group input[type="number"]:focus,
         .input-group select:focus {
-            border-color: #58a6ff; 
+            border-color: #58a6ff;
             box-shadow: 0 0 0 1px #58a6ff;
         }
-        
-        .input-group input:invalid { 
-            border-color: #f87171; 
-            box-shadow: 0 0 0 1px #f87171; 
+
+        .input-group input:invalid {
+            border-color: #f87171;
+            box-shadow: 0 0 0 1px #f87171;
         }
-        
+
         .warning { color: #fca5a5; font-weight: 600; }
         .recommendation { color: #fcd34d; font-weight: 500; }
-        
+
         .toggle-label {
             cursor: pointer; display: block; padding: 0.75rem; text-align: center;
             border-radius: 0.75rem; font-weight: 500; transition: all 0.2s ease-in-out;
             color: #9ca3af; background-color: #21262d; border: 1px solid #484f58;
         }
-        
-        .toggle-checkbox { display: none; }
+
+        /* Visually hidden but keyboard-focusable (display:none removed the
+           checkboxes from the tab order entirely — an accessibility bug) */
+        .toggle-checkbox {
+            position: absolute;
+            width: 1px; height: 1px;
+            margin: -1px; padding: 0; border: 0;
+            clip: rect(0 0 0 0);
+            clip-path: inset(50%);
+            overflow: hidden;
+            white-space: nowrap;
+        }
         .toggle-checkbox:checked + .toggle-label {
             background-color: #1f2937; border-color: #58a6ff;
             color: #58a6ff; box-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
         }
-        
+        .toggle-checkbox:focus-visible + .toggle-label {
+            outline: 2px solid #58a6ff;
+            outline-offset: 2px;
+        }
+
         @keyframes flash-update {
             0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.5); }
             50% { box-shadow: 0 0 15px 3px rgba(88, 166, 255, 0.3); }
             100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
         }
-        
+
         .result-flash { animation: flash-update 0.5s ease-out; }
     </style>
 </head>
@@ -76,11 +100,11 @@
             <h1 class="text-3xl md:text-4xl font-extrabold text-blue-500">ACC Strategist</h1>
             <p class="text-gray-400 mt-2">Race Strategy & Setup Engineering Assistant</p>
         </header>
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 grow">
             <div class="lg:col-span-2 card p-6 rounded-xl shadow-2xl">
                 <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white">Race Inputs</h2>
-                
+
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div class="input-group">
                         <label for="track" class="block text-sm font-medium mb-1 text-gray-400">Track</label>
@@ -109,11 +133,11 @@
                         <input type="number" id="fuelPerLap" class="w-full p-2 rounded-lg" step="0.01" min="0.1" max="25" required>
                     </div>
                     <div class="input-group">
-                        <label for="raceDuration" class="block text-sm font-medium mb-1 text-gray-400">Duration (e.g. 1h, 90m, 1h30m)</label>
-                        <input type="text" id="raceDuration" class="w-full p-2 rounded-lg" value="1h" placeholder="1h, 90m, 1h30m">
+                        <label for="raceDuration" class="block text-sm font-medium mb-1 text-gray-400">Duration (90 = minutes, or 1h30m)</label>
+                        <input type="text" id="raceDuration" class="w-full p-2 rounded-lg" value="1h" placeholder="90, 90m, 1h30m">
                     </div>
                 </div>
-                
+
                 <div class="grid grid-cols-2 sm:grid-cols-6 gap-4 mb-6 border-t border-gray-700 pt-6">
                     <div class="input-group">
                         <label for="maxStintTime" class="block text-sm font-medium mb-1 text-gray-400">Max Stint (min)</label>
@@ -198,19 +222,22 @@
 
             <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl border-l-4 border-l-blue-500">
                 <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                     Engineer Setup Advice
                 </h2>
-                <p class="text-xs text-gray-500 italic mb-4">Baseline heuristic recommendations. Always validate in a practice session before racing.</p>
+                <p class="text-xs text-gray-500 italic mb-4">
+                    Baseline heuristic recommendations. Ride-height and rake figures are approximations of in-game
+                    setup ranges (BoP and track rules can restrict them) — always validate in a practice session before racing.
+                </p>
                 <div id="setupAdvice" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm"></div>
             </div>
 
             <div class="lg:col-span-3 card p-6 rounded-xl shadow-2xl border-l-4 border-l-green-500">
                 <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-white flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="12" cy="12" r="10" stroke-width="2"/>
                         <circle cx="12" cy="12" r="6" stroke-width="2"/>
                         <circle cx="12" cy="12" r="2" stroke-width="2"/>
@@ -218,11 +245,11 @@
                     Tire Strategy
                 </h2>
                 <p class="text-xs text-gray-500 italic mb-4">
-                    Wear estimates based on track surface, car weight distribution, compound, and temperature.
-                    Actual wear depends on driving style and setup.
+                    ACC GT3/GT4 cars use a single dry compound (plus wets). Wear estimates below are heuristics based on
+                    track abrasiveness, car weight distribution, and temperature. Actual wear depends on driving style and setup.
                 </p>
                 <div id="tireSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
-                
+
                 <div id="tirePlotContainer" class="mb-6 bg-gray-800/30 p-4 rounded-lg border border-gray-700 hidden">
                     <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Degradation Plot</h3>
                     <div class="relative h-64 w-full">
@@ -248,63 +275,91 @@
 // ===============================================================
 // CONSTANTS & DATA
 // ===============================================================
-const APP_VERSION = '2026.04.08.1';
-const STORAGE_KEY = 'acc_strategy_v2';
+const APP_VERSION = '2026.06.09.1';
+// Bumped: stored car/track names and tire semantics changed in this version
+const STORAGE_KEY = 'acc_strategy_v3';
 
-// Set Chart.js global font
-Chart.defaults.font.family = 'Inter, sans-serif';
+// Chart.js is loaded from a CDN and may be unavailable offline on a
+// first visit. The app must keep working without it.
+function hasChart() { return typeof Chart !== 'undefined'; }
+if (hasChart()) {
+    Chart.defaults.font.family = 'Inter, sans-serif';
+}
 
+/*
+ * TRACK_DATA
+ * lapTimeSeconds : typical GT3 race pace (auto-replaced by your own input)
+ * baseFuel       : typical GT3 fuel/lap in liters (scaled by car factor)
+ * Both are community-reference ballpark figures — always verify with the
+ * in-game average consumption readout for your car.
+ * rakeDiff       : suggested rear-minus-front ride height (mm)
+ * wing           : suggested rear wing window (clamped to car max)
+ * minFRH         : bumpy-track minimum front ride height heuristic (mm)
+ */
 const TRACK_DATA = [
-  {name:"Barcelona",lapTimeSeconds:105,baseFuel:3.0,aero:"High",curbs:"Med",brakeWear:2,rakeDiff:25,wing:"9-11"},
-  {name:"Brands Hatch",lapTimeSeconds:85,baseFuel:2.4,aero:"High",curbs:"High",brakeWear:1,rakeDiff:25,wing:"10-12"},
-  {name:"COTA",lapTimeSeconds:135,baseFuel:3.4,aero:"High",curbs:"Med",brakeWear:2,rakeDiff:20,wing:"8-10"},
-  {name:"Donington",lapTimeSeconds:105,baseFuel:2.8,aero:"Med-High",curbs:"High",brakeWear:1,rakeDiff:25,wing:"7-9"},
-  {name:"Hungaroring",lapTimeSeconds:105,baseFuel:2.7,aero:"Very High",curbs:"Med",brakeWear:2,rakeDiff:30,wing:"11-13"},
-  {name:"Imola",lapTimeSeconds:105,baseFuel:2.9,aero:"High",curbs:"High",brakeWear:3,rakeDiff:25,wing:"8-10"},
-  {name:"Indianapolis",lapTimeSeconds:90,baseFuel:2.6,aero:"Med-Low",curbs:"Low",brakeWear:2,rakeDiff:15,wing:"3-5"},
-  {name:"Kyalami",lapTimeSeconds:98,baseFuel:2.9,aero:"High",curbs:"Med",brakeWear:2,rakeDiff:25,wing:"9-11"},
-  {name:"Laguna Seca",lapTimeSeconds:85,baseFuel:2.5,aero:"High",curbs:"High",brakeWear:2,rakeDiff:25,wing:"8-10"},
-  {name:"Misano",lapTimeSeconds:98,baseFuel:2.8,aero:"High",curbs:"High",brakeWear:1,rakeDiff:25,wing:"9-11"},
-  {name:"Monza",lapTimeSeconds:110,baseFuel:3.1,aero:"Very Low",curbs:"Extreme",brakeWear:3,rakeDiff:10,wing:"0-2"},
-  {name:"Mount Panorama",lapTimeSeconds:125,baseFuel:3.2,aero:"Med-Low",curbs:"High",brakeWear:2,rakeDiff:15,wing:"4-6",minFRH:54},
-  {name:"Nürburgring 24h",lapTimeSeconds:495,baseFuel:14.5,aero:"High",curbs:"Extreme",brakeWear:2,rakeDiff:20,wing:"10-12",minFRH:62},
-  {name:"Nürburgring GP",lapTimeSeconds:105,baseFuel:3.1,aero:"High",curbs:"Med",brakeWear:2,rakeDiff:25,wing:"8-10"},
-  {name:"Oulton Park",lapTimeSeconds:95,baseFuel:2.7,aero:"High",curbs:"Very High",brakeWear:1,rakeDiff:25,wing:"10-12"},
-  {name:"Paul Ricard",lapTimeSeconds:128,baseFuel:3.4,aero:"Low",curbs:"Low",brakeWear:2,rakeDiff:10,wing:"1-3"},
-  {name:"Red Bull Ring",lapTimeSeconds:88,baseFuel:2.5,aero:"Med",curbs:"High",brakeWear:3,rakeDiff:20,wing:"4-6"},
-  {name:"Silverstone",lapTimeSeconds:120,baseFuel:3.4,aero:"High",curbs:"Low",brakeWear:1,rakeDiff:25,wing:"8-10"},
-  {name:"Snetterton",lapTimeSeconds:110,baseFuel:3.1,aero:"Med-High",curbs:"Med",brakeWear:1,rakeDiff:20,wing:"6-8"},
-  {name:"Spa-Francorchamps",lapTimeSeconds:150,baseFuel:3.6,aero:"Med-Low",curbs:"Med",brakeWear:2,rakeDiff:15,wing:"3-5",minFRH:56},
-  {name:"Suzuka",lapTimeSeconds:120,baseFuel:3.3,aero:"High",curbs:"Med",brakeWear:1,rakeDiff:25,wing:"9-11"},
-  {name:"Valencia",lapTimeSeconds:93,baseFuel:2.5,aero:"High",curbs:"Med",brakeWear:2,rakeDiff:25,wing:"9-11"},
-  {name:"Watkins Glen",lapTimeSeconds:104,baseFuel:3.1,aero:"High",curbs:"High",brakeWear:1,rakeDiff:25,wing:"7-10"},
-  {name:"Zandvoort",lapTimeSeconds:95,baseFuel:2.7,aero:"High",curbs:"Med",brakeWear:1,rakeDiff:30,wing:"10-12"},
-  {name:"Zolder",lapTimeSeconds:90,baseFuel:2.6,aero:"Med",curbs:"Extreme",brakeWear:3,rakeDiff:20,wing:"5-7"}
+  {name:"Barcelona",          lapTimeSeconds:105, baseFuel:2.9, aero:"High",     curbs:"Med",       brakeWear:2, rakeDiff:20, wing:"8-10"},
+  {name:"Brands Hatch",       lapTimeSeconds:85,  baseFuel:2.4, aero:"High",     curbs:"High",      brakeWear:1, rakeDiff:20, wing:"9-11"},
+  {name:"COTA",               lapTimeSeconds:126, baseFuel:3.2, aero:"High",     curbs:"Med",       brakeWear:2, rakeDiff:18, wing:"7-9"},
+  {name:"Donington",          lapTimeSeconds:88,  baseFuel:2.5, aero:"Med-High", curbs:"High",      brakeWear:1, rakeDiff:20, wing:"7-9"},
+  {name:"Hungaroring",        lapTimeSeconds:104, baseFuel:2.6, aero:"Very High",curbs:"Med",       brakeWear:2, rakeDiff:22, wing:"10-12"},
+  {name:"Imola",              lapTimeSeconds:102, baseFuel:2.8, aero:"High",     curbs:"High",      brakeWear:3, rakeDiff:20, wing:"7-9"},
+  {name:"Indianapolis",       lapTimeSeconds:95,  baseFuel:2.7, aero:"Med-Low",  curbs:"Low",       brakeWear:2, rakeDiff:14, wing:"3-5"},
+  {name:"Kyalami",            lapTimeSeconds:101, baseFuel:2.9, aero:"High",     curbs:"Med",       brakeWear:2, rakeDiff:20, wing:"8-10"},
+  {name:"Laguna Seca",        lapTimeSeconds:83,  baseFuel:2.4, aero:"High",     curbs:"High",      brakeWear:2, rakeDiff:20, wing:"7-9"},
+  {name:"Misano",             lapTimeSeconds:94,  baseFuel:2.7, aero:"High",     curbs:"High",      brakeWear:1, rakeDiff:20, wing:"8-10"},
+  {name:"Monza",              lapTimeSeconds:108, baseFuel:3.5, aero:"Very Low", curbs:"Extreme",   brakeWear:3, rakeDiff:10, wing:"0-2"},
+  {name:"Mount Panorama",     lapTimeSeconds:122, baseFuel:3.3, aero:"Med-Low",  curbs:"High",      brakeWear:2, rakeDiff:14, wing:"3-5", minFRH:54},
+  {name:"Nürburgring 24h",    lapTimeSeconds:495, baseFuel:14.5,aero:"High",     curbs:"Extreme",   brakeWear:2, rakeDiff:16, wing:"9-11", minFRH:62},
+  {name:"Nürburgring GP",     lapTimeSeconds:115, baseFuel:3.0, aero:"High",     curbs:"Med",       brakeWear:2, rakeDiff:20, wing:"7-9"},
+  {name:"Oulton Park",        lapTimeSeconds:94,  baseFuel:2.6, aero:"High",     curbs:"Very High", brakeWear:1, rakeDiff:20, wing:"9-11"},
+  {name:"Paul Ricard",        lapTimeSeconds:114, baseFuel:3.3, aero:"Low",      curbs:"Low",       brakeWear:2, rakeDiff:10, wing:"1-3"},
+  {name:"Red Bull Ring",      lapTimeSeconds:89,  baseFuel:2.6, aero:"Med",      curbs:"High",      brakeWear:3, rakeDiff:16, wing:"4-6"},
+  {name:"Silverstone",        lapTimeSeconds:119, baseFuel:3.3, aero:"High",     curbs:"Low",       brakeWear:1, rakeDiff:20, wing:"7-9"},
+  {name:"Snetterton",         lapTimeSeconds:107, baseFuel:2.9, aero:"Med-High", curbs:"Med",       brakeWear:1, rakeDiff:18, wing:"6-8"},
+  {name:"Spa-Francorchamps",  lapTimeSeconds:139, baseFuel:3.7, aero:"Med-Low",  curbs:"Med",       brakeWear:2, rakeDiff:14, wing:"3-5", minFRH:56},
+  {name:"Suzuka",             lapTimeSeconds:121, baseFuel:3.3, aero:"High",     curbs:"Med",       brakeWear:1, rakeDiff:20, wing:"8-10"},
+  {name:"Valencia",           lapTimeSeconds:92,  baseFuel:2.5, aero:"High",     curbs:"Med",       brakeWear:2, rakeDiff:20, wing:"8-10"},
+  {name:"Watkins Glen",       lapTimeSeconds:96,  baseFuel:3.0, aero:"High",     curbs:"High",      brakeWear:1, rakeDiff:20, wing:"6-9"},
+  {name:"Zandvoort",          lapTimeSeconds:96,  baseFuel:2.5, aero:"High",     curbs:"Med",       brakeWear:1, rakeDiff:22, wing:"9-11"},
+  {name:"Zolder",             lapTimeSeconds:89,  baseFuel:2.5, aero:"Med",      curbs:"Extreme",   brakeWear:3, rakeDiff:16, wing:"5-7"}
 ];
 
-// Cars updated with corrected, realistic ACC physical bounds for maxRRH to allow rake modifiers room to work
+/*
+ * CAR_DATA — verified against the in-game spec sheets:
+ *   capacity  : in-game fuel tank capacity (liters)
+ *   maps      : number of engine maps
+ *   maxTC/maxABS : number of TC1/ABS stages
+ *   hasTC2    : car has secondary traction control (cut)
+ * Ride heights (baseFRH/min/max FRH/RRH) and maxRake are APPROXIMATIONS of
+ * in-game setup ranges; BoP or track rules can restrict them. Verify in the
+ * setup screen. elec{} values are recommended baselines, not maximums.
+ * factor = relative fuel consumption (Mustang ~+10% confirmed by Kunos BoP notes).
+ */
 const CAR_DATA = [
-  {name:"Aston Martin V8 Vantage",factor:1.0,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:70,maxRRH:115,minRRH:63,maxWing:11,maxTC:8,maxABS:8,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Audi R8 LMS EVO II",factor:1.02,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:65,maxRRH:115,minRRH:60,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Bentley Continental",factor:1.08,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:50,maxFRH:75,maxRRH:120,minRRH:65,maxWing:11,maxTC:11,maxABS:11,optBB:"58.0% - 62.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"BMW M4 GT3",factor:0.94,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,minRRH:63,maxWing:11,maxTC:10,maxABS:10,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
-  {name:"BMW M6 GT3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:60,minFRH:50,maxFRH:75,maxRRH:120,minRRH:65,maxWing:11,maxTC:11,maxABS:11,optBB:"56.0% - 58.0%",elec:{tc:3,tc2:1,abs:3,hasTC2:true}},
-  {name:"Ferrari 296 GT3",factor:0.96,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:65,maxRRH:86,minRRH:55,maxWing:11,maxTC:12,maxABS:12,optBB:"51.0% - 53.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
-  {name:"Ferrari 488 EVO",factor:1.0,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:70,maxRRH:90,minRRH:55,maxWing:11,maxTC:12,maxABS:12,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:0,abs:2,hasTC2:true}},
-  {name:"Ford Mustang GT3",factor:1.1,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,minRRH:63,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Honda NSX EVO",factor:0.96,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:54,minFRH:50,maxFRH:70,maxRRH:105,minRRH:58,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"Jaguar G3",factor:1.05,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:110,minRRH:63,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:4,tc2:null,abs:4,hasTC2:false}},
-  {name:"Lamborghini Huracán EVO 2",factor:1.03,capacity:120,enginePos:"Mid",mapRace:"1",mapFuel:"3",rakeSens:true,baseFRH:53,minFRH:50,maxFRH:65,maxRRH:115,minRRH:60,maxWing:11,maxTC:8,maxABS:8,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Lexus RC F GT3",factor:1.06,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:58,minFRH:50,maxFRH:75,maxRRH:115,minRRH:63,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:2,abs:3,hasTC2:true}},
-  {name:"McLaren 720S EVO",factor:0.95,capacity:110,enginePos:"Mid",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:65,maxRRH:90,minRRH:55,maxWing:11,maxTC:11,maxABS:11,optBB:"53.0% - 55.0%",elec:{tc:2,tc2:null,abs:2,hasTC2:false}},
-  {name:"Mercedes-AMG EVO",factor:1.04,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"3",rakeSens:false,baseFRH:54,minFRH:50,maxFRH:75,maxRRH:110,minRRH:60,maxWing:11,maxTC:11,maxABS:11,optBB:"54.0% - 56.0%",elec:{tc:3,tc2:null,abs:2,hasTC2:false}},
-  {name:"Nissan GT-R 2018",factor:1.07,capacity:120,enginePos:"Front",mapRace:"1",mapFuel:"2",rakeSens:false,baseFRH:56,minFRH:50,maxFRH:75,maxRRH:110,minRRH:60,maxWing:11,maxTC:11,maxABS:11,optBB:"55.0% - 57.0%",elec:{tc:3,tc2:null,abs:3,hasTC2:false}},
-  {name:"Porsche 991 GT3 R",factor:0.95,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:52,minFRH:50,maxFRH:70,maxRRH:120,minRRH:60,maxWing:11,maxTC:11,maxABS:11,optBB:"48.0% - 50.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}},
-  {name:"Porsche 992 GT3 R",factor:0.93,capacity:120,enginePos:"Rear",mapRace:"1",mapFuel:"2",rakeSens:true,baseFRH:50,minFRH:50,maxFRH:70,maxRRH:120,minRRH:60,maxWing:12,maxTC:11,maxABS:11,optBB:"49.0% - 52.0%",elec:{tc:4,tc2:null,abs:3,hasTC2:false}}
+  {name:"Aston Martin V8 Vantage GT3", factor:1.00, capacity:120, enginePos:"Front", maps:8,  rakeSens:false, baseFRH:56, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:8,  maxABS:11, hasTC2:true,  optBB:"56.0% - 58.0%", elec:{tc:3, tc2:2,    abs:3}},
+  {name:"Audi R8 LMS Evo II",          factor:1.02, capacity:120, enginePos:"Mid",   maps:8,  rakeSens:false, baseFRH:54, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:8,  maxABS:11, hasTC2:true,  optBB:"54.0% - 56.0%", elec:{tc:3, tc2:2,    abs:3}},
+  {name:"Bentley Continental GT3 (2018)", factor:1.08, capacity:120, enginePos:"Front", maps:8, rakeSens:false, baseFRH:58, minFRH:50, maxFRH:80, minRRH:62, maxRRH:100, maxWing:11, maxTC:8,  maxABS:11, hasTC2:false, optBB:"57.0% - 59.0%", elec:{tc:3, tc2:null, abs:3}},
+  {name:"BMW M4 GT3",                  factor:0.96, capacity:120, enginePos:"Front", maps:8,  rakeSens:false, baseFRH:56, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:10, maxABS:10, hasTC2:false, optBB:"54.0% - 56.0%", elec:{tc:3, tc2:null, abs:3}},
+  {name:"BMW M6 GT3",                  factor:1.05, capacity:125, enginePos:"Front", maps:8,  rakeSens:false, baseFRH:58, minFRH:50, maxFRH:80, minRRH:62, maxRRH:100, maxWing:11, maxTC:10, maxABS:5,  hasTC2:false, optBB:"56.0% - 58.0%", elec:{tc:3, tc2:null, abs:2}},
+  {name:"Ferrari 296 GT3",             factor:0.96, capacity:120, enginePos:"Mid",   maps:10, rakeSens:true,  maxRake:20, baseFRH:52, minFRH:50, maxFRH:75, minRRH:55, maxRRH:90,  maxWing:11, maxTC:11, maxABS:11, hasTC2:true,  optBB:"52.0% - 54.0%", elec:{tc:2, tc2:1,    abs:2}},
+  {name:"Ferrari 488 GT3 Evo",         factor:1.00, capacity:110, enginePos:"Mid",   maps:12, rakeSens:true,  maxRake:22, baseFRH:53, minFRH:50, maxFRH:75, minRRH:55, maxRRH:90,  maxWing:11, maxTC:11, maxABS:11, hasTC2:true,  optBB:"53.0% - 55.0%", elec:{tc:2, tc2:1,    abs:2}},
+  {name:"Ford Mustang GT3",            factor:1.10, capacity:120, enginePos:"Front", maps:8,  rakeSens:false, baseFRH:56, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:11, maxABS:11, hasTC2:true,  optBB:"55.0% - 57.0%", elec:{tc:2, tc2:1,    abs:3}},
+  {name:"Honda NSX GT3 Evo",           factor:0.96, capacity:120, enginePos:"Mid",   maps:8,  rakeSens:false, baseFRH:54, minFRH:50, maxFRH:75, minRRH:58, maxRRH:95,  maxWing:11, maxTC:8,  maxABS:11, hasTC2:true,  optBB:"53.0% - 55.0%", elec:{tc:3, tc2:2,    abs:3}},
+  {name:"Emil Frey Jaguar G3",         factor:1.05, capacity:119, enginePos:"Front", maps:6,  rakeSens:false, baseFRH:56, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:10, maxABS:11, hasTC2:false, optBB:"55.0% - 57.0%", elec:{tc:4, tc2:null, abs:4}},
+  {name:"Lamborghini Huracán GT3 Evo2",factor:1.03, capacity:108, enginePos:"Mid",   maps:8,  rakeSens:false, baseFRH:53, minFRH:50, maxFRH:75, minRRH:58, maxRRH:95,  maxWing:11, maxTC:8,  maxABS:11, hasTC2:true,  optBB:"54.0% - 56.0%", elec:{tc:3, tc2:2,    abs:3}},
+  {name:"Lexus RC F GT3",              factor:1.06, capacity:120, enginePos:"Front", maps:5,  rakeSens:false, baseFRH:57, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:8,  maxABS:11, hasTC2:false, optBB:"55.0% - 57.0%", elec:{tc:3, tc2:null, abs:3}},
+  {name:"McLaren 720S GT3 Evo",        factor:0.95, capacity:120, enginePos:"Mid",   maps:12, rakeSens:true,  maxRake:18, baseFRH:52, minFRH:50, maxFRH:75, minRRH:55, maxRRH:90,  maxWing:12, maxTC:12, maxABS:12, hasTC2:true,  optBB:"53.0% - 55.0%", elec:{tc:2, tc2:1,    abs:2}},
+  {name:"Mercedes-AMG GT3 Evo",        factor:1.04, capacity:120, enginePos:"Front", maps:3,  rakeSens:false, baseFRH:54, minFRH:50, maxFRH:80, minRRH:58, maxRRH:100, maxWing:11, maxTC:11, maxABS:10, hasTC2:false, optBB:"54.0% - 56.0%", elec:{tc:3, tc2:null, abs:2}},
+  {name:"Nissan GT-R Nismo GT3 (2018)",factor:1.07, capacity:132, enginePos:"Front", maps:4,  rakeSens:false, baseFRH:56, minFRH:50, maxFRH:80, minRRH:60, maxRRH:100, maxWing:11, maxTC:9,  maxABS:11, hasTC2:false, optBB:"55.0% - 57.0%", elec:{tc:3, tc2:null, abs:3}},
+  {name:"Porsche 991 II GT3 R",        factor:0.95, capacity:120, enginePos:"Rear",  maps:10, rakeSens:true,  baseFRH:52, minFRH:50, maxFRH:75, minRRH:58, maxRRH:95,  maxWing:11, maxTC:11, maxABS:11, hasTC2:true,  optBB:"50.0% - 53.0%", elec:{tc:4, tc2:2,    abs:3}},
+  {name:"Porsche 992 GT3 R",           factor:0.93, capacity:103, enginePos:"Rear",  maps:10, rakeSens:true,  baseFRH:51, minFRH:50, maxFRH:75, minRRH:58, maxRRH:95,  maxWing:12, maxTC:11, maxABS:11, hasTC2:true,  optBB:"50.0% - 53.0%", elec:{tc:4, tc2:2,    abs:3}}
 ];
 
 // ===============================================================
 // TIRE WEAR MODEL
+// ACC GT3 cars run a single dry compound (plus wets). This model
+// estimates dry-compound life, adjusted for track abrasiveness and
+// ambient temperature (hotter = faster wear, shorter peak window).
 // ===============================================================
 
 const TRACK_TIRE_WEAR = {
@@ -323,19 +378,16 @@ const ENGINE_WEAR_BIAS = {
     "Rear":  { front: 0.9,  rear: 1.15 }
 };
 
-function getCompoundData(code) {
-    const map = {
-        "DH": { wearRate: 0.7, optimalRange: { max: 35 }, usableRange: { max: 55 } },
-        "DM": { wearRate: 1.0, optimalRange: { max: 28 }, usableRange: { max: 45 } },
-        "DS": { wearRate: 1.4, optimalRange: { max: 18 }, usableRange: { max: 30 } },
-        "W":  { wearRate: 0.8, optimalRange: { max: 40 }, usableRange: { max: 60 } }
+// Dry compound baseline: ~30 min at peak grip, ~75 min usable at a
+// neutral 22°C on an average-wear track. Temperature shifts this.
+function getDryCompoundModel(ambientTemp) {
+    // ±1.2% wear per °C away from 22°C (hotter wears faster)
+    const tempWearMult = clampVal(1 + (ambientTemp - 22) * 0.012, 0.75, 1.4);
+    return {
+        optimalEnd: 30 / tempWearMult,
+        usableEnd: 75 / tempWearMult,
+        wearRate: tempWearMult
     };
-    return map[code] || map["DM"];
-}
-
-function getCompoundFullName(code) {
-    const names = { "DH": "Dry Hard", "DM": "Dry Medium", "DS": "Dry Soft", "W": "Wet" };
-    return names[code] || code;
 }
 
 function estimateGrip(ageMinutes, optimalEnd, usableEnd) {
@@ -355,6 +407,20 @@ function clampVal(val, min, max) {
     return Math.max(min, Math.min(max, val));
 }
 
+// Parse-helper: returns the number if finite, otherwise the default.
+// Replaces the `parseFloat(x) || def` pattern, which silently turned a
+// legitimate 0 (e.g. 0°C ambient, 0s pit loss) into the default.
+function numOr(value, def) {
+    const v = parseFloat(value);
+    return Number.isFinite(v) ? v : def;
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
 // ===============================================================
 // DOM REFS
 // ===============================================================
@@ -362,7 +428,7 @@ const D = {};
 ['track','car','fuelStrategy','avgLapTime','fuelPerLap','raceDuration',
  'maxStintTime','pitStops','safetyLaps','pitLossTime','ambientTemp',
  'totalLaps','totalFuel','calculatedPits','totalPitLoss','strategyType',
- 'stintDetails','setupAdvice','resultsCard','message', 'tireStints', 'tireSummary', 'tirePlotContainer'].forEach(id => {
+ 'stintDetails','setupAdvice','resultsCard','message','tireStints','tireSummary','tirePlotContainer'].forEach(id => {
     D[id] = document.getElementById(id);
 });
 D.rake = document.getElementById('rakeAggressiveness');
@@ -372,8 +438,7 @@ D.tires = document.getElementById('tiresRequired');
 D.swap = document.getElementById('driverSwapRequired');
 D.footerVersion = document.getElementById('footer-version');
 
-let saveTimeout;
-let suppressPitEvents = false;
+let saveTimeout = null;
 let tireChartInstance = null;
 
 // ===============================================================
@@ -385,28 +450,46 @@ function parseLapTime(time) {
     if (parts.length === 2) {
         const m = parseInt(parts[0], 10);
         const s = parseFloat(parts[1]);
-        if (isNaN(m) || isNaN(s) || m < 0 || s < 0 || s >= 60) return 0;
+        if (!Number.isFinite(m) || !Number.isFinite(s) || m < 0 || s < 0 || s >= 60) return 0;
         return m * 60 + s;
     }
+    if (parts.length > 2) {
+        // H:MM:SS is not supported for a lap time — reject explicitly
+        // instead of silently parsing "1:50:30" as 1 second.
+        return 0;
+    }
     const v = parseFloat(str);
-    return (isNaN(v) || v <= 0) ? 0 : v;
+    return (Number.isFinite(v) && v > 0) ? v : 0;
 }
 
 function formatLapTime(secs) {
-    if (!secs || secs <= 0) return '0:00.000';
-    return Math.floor(secs/60) + ':' + (secs%60).toFixed(3).padStart(6,'0');
+    if (!Number.isFinite(secs) || secs <= 0) return '0:00.000';
+    // Round to whole milliseconds FIRST, so 119.9996 becomes 2:00.000
+    // instead of the invalid 1:60.000.
+    const ms = Math.round(secs * 1000);
+    const mins = Math.floor(ms / 60000);
+    const rem = (ms % 60000) / 1000;
+    return mins + ':' + rem.toFixed(3).padStart(6, '0');
 }
 
+/*
+ * Duration parsing rules (documented in the input placeholder):
+ *  "90"      -> 90 minutes  (bare numbers are ALWAYS minutes)
+ *  "90m"     -> 90 minutes
+ *  "1.5h"    -> 1.5 hours
+ *  "1h30m"   -> 1h 30m  (trailing m optional: "1h30" works too)
+ * The old heuristic (bare numbers >= 10 were minutes, < 10 were hours)
+ * was surprising: "9" meant 9 hours while "10" meant 10 minutes.
+ */
 function parseDuration(str) {
     str = String(str).toLowerCase().trim();
     if (!str) return 0;
     const compound = str.match(/^(\d+(?:\.\d+)?)\s*h\s*(\d+(?:\.\d+)?)\s*m?$/);
-    if (compound) return parseFloat(compound[1])*3600 + parseFloat(compound[2])*60;
+    if (compound) return parseFloat(compound[1]) * 3600 + parseFloat(compound[2]) * 60;
     const v = parseFloat(str);
-    if (isNaN(v) || v <= 0) return 0;
-    if (str.includes('m')) return v * 60;
+    if (!Number.isFinite(v) || v <= 0) return 0;
     if (str.includes('h')) return v * 3600;
-    return v >= 10 ? v * 60 : v * 3600;
+    return v * 60; // bare number or trailing 'm' = minutes
 }
 
 // ===============================================================
@@ -422,7 +505,22 @@ function saveSettings() {
         rake: D.rake.value, elec: D.elec.value,
         refuel: D.refuel.checked, tires: D.tires.checked, swap: D.swap.checked
     };
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {}
+}
+
+function flushSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+    saveSettings();
+}
+
+// Returns true only if the value names an option that actually exists,
+// guarding against renamed tracks/cars leaving a select silently empty.
+function setSelectIfValid(selectEl, value) {
+    if (typeof value !== 'string') return false;
+    const exists = Array.from(selectEl.options).some(o => o.value === value);
+    if (exists) selectEl.value = value;
+    return exists;
 }
 
 function loadSettings() {
@@ -430,30 +528,32 @@ function loadSettings() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return false;
         const s = JSON.parse(raw);
-        D.track.value = s.track || D.track.value;
-        D.car.value = s.car || D.car.value;
-        D.fuelStrategy.value = s.fuelStrategy || 'equal';
+        const trackOk = setSelectIfValid(D.track, s.track);
+        const carOk = setSelectIfValid(D.car, s.car);
+        D.fuelStrategy.value = (s.fuelStrategy === 'minimal') ? 'minimal' : 'equal';
         D.avgLapTime.value = s.avgLapTime || '1:50.000';
         D.fuelPerLap.value = s.fuelPerLap || '';
         D.raceDuration.value = s.raceDuration || '1h';
         D.maxStintTime.value = s.maxStintTime || '65';
-        D.pitStops.value = s.pitStops || '1';
-        D.safetyLaps.value = s.safetyLaps || '2';
-        D.pitLossTime.value = s.pitLossTime || '60';
-        D.ambientTemp.value = s.ambientTemp || '22';
-        D.rake.value = s.rake || 'default';
-        D.elec.value = s.elec || 'safe';
+        D.pitStops.value = (s.pitStops !== undefined && s.pitStops !== '') ? s.pitStops : '1';
+        D.safetyLaps.value = (s.safetyLaps !== undefined && s.safetyLaps !== '') ? s.safetyLaps : '2';
+        D.pitLossTime.value = (s.pitLossTime !== undefined && s.pitLossTime !== '') ? s.pitLossTime : '60';
+        D.ambientTemp.value = (s.ambientTemp !== undefined && s.ambientTemp !== '') ? s.ambientTemp : '22';
+        D.rake.value = ['default','moderate','aggressive'].includes(s.rake) ? s.rake : 'default';
+        D.elec.value = ['safe','balanced','esports'].includes(s.elec) ? s.elec : 'safe';
         D.refuel.checked = s.refuel !== false;
         D.tires.checked = s.tires !== false;
         D.swap.checked = s.swap !== false;
-        return true;
-    } catch(e) { return false; }
+        // If a stored track/car no longer exists, fall back to estimates
+        // for the (defaulted) selection so the UI isn't silently blank.
+        return trackOk && carOk;
+    } catch (e) { return false; }
 }
 
 function setPitStopsQuiet(val) {
-    suppressPitEvents = true;
+    // Programmatic .value assignment never dispatches input/change
+    // events, so no event suppression is needed.
     D.pitStops.value = val;
-    suppressPitEvents = false;
 }
 
 // ===============================================================
@@ -465,13 +565,13 @@ function getInputs() {
         carName: D.car.value,
         fuelStrategy: D.fuelStrategy.value,
         lapTime: parseLapTime(D.avgLapTime.value),
-        fuelPerLap: parseFloat(D.fuelPerLap.value) || 0,
+        fuelPerLap: numOr(D.fuelPerLap.value, 0),
         durationSecs: parseDuration(D.raceDuration.value),
-        maxStintMin: parseFloat(D.maxStintTime.value) || 65,
-        userPitStops: parseInt(D.pitStops.value) || 0,
-        safetyLaps: parseFloat(D.safetyLaps.value) || 0,
-        pitLossSecs: parseFloat(D.pitLossTime.value) || 60,
-        ambientTemp: parseFloat(D.ambientTemp.value) || 22,
+        maxStintMin: Math.max(1, numOr(D.maxStintTime.value, 65)),
+        userPitStops: Math.max(0, Math.trunc(numOr(D.pitStops.value, 0))),
+        safetyLaps: Math.max(0, numOr(D.safetyLaps.value, 0)),
+        pitLossSecs: Math.max(0, numOr(D.pitLossTime.value, 60)),   // 0 is now a valid value
+        ambientTemp: numOr(D.ambientTemp.value, 22),                 // 0°C is now a valid value
         rake: D.rake.value,
         elecProfile: D.elec.value,
         refuelEnabled: D.refuel.checked,
@@ -484,12 +584,12 @@ function computeStrategy(inp) {
     const result = {
         valid: false, totalLaps: 0, totalFuel: 0, finalPits: 0,
         pitLossTotal: 0, stints: [], warnings: [], correctionMsg: '',
-        durationMins: 0
+        corrected: false, durationMins: 0
     };
 
     const track = TRACK_DATA.find(t => t.name === inp.trackName);
     const car = CAR_DATA.find(c => c.name === inp.carName);
-    if (!track || !car || !inp.lapTime || !inp.fuelPerLap || !inp.durationSecs) return result;
+    if (!track || !car || !inp.lapTime || !(inp.fuelPerLap > 0) || !inp.durationSecs) return result;
 
     result.track = track;
     result.car = car;
@@ -509,29 +609,68 @@ function computeStrategy(inp) {
         return result;
     }
 
+    // ─── No-refuel mode ─────────────────────────────────────────
+    // All fuel is loaded at the start. Pit stops can STILL be needed
+    // for tire changes / driver swaps / stint-time limits — previously
+    // this branch forced 0 stops even when a swap was required.
     if (!inp.refuelEnabled) {
-        const racingTime = inp.durationSecs;
-        const totalLaps = Math.ceil(racingTime / inp.lapTime);
+        const otherStopsWanted = inp.tiresEnabled || inp.swapEnabled;
+
+        // Iterate: pit loss reduces racing time, which changes lap count
+        let pits = otherStopsWanted ? Math.max(0, inp.userPitStops) : 0;
+        let totalLaps = 0;
+        for (let iter = 0; iter < 5; iter++) {
+            const racingTime = Math.max(0, inp.durationSecs - pits * inp.pitLossSecs);
+            totalLaps = Math.max(1, Math.ceil(racingTime / inp.lapTime));
+            const minPitsTime = Math.max(0, Math.ceil(totalLaps / maxLapsTime) - 1);
+            const required = Math.max(otherStopsWanted ? pits : 0, minPitsTime);
+            if (required !== pits) {
+                pits = required;
+                result.corrected = true;
+                result.correctionMsg = 'Pit stops raised to ' + pits + ' (stint limit: ' + inp.maxStintMin + 'm, no refuel).';
+            } else break;
+        }
+
         const totalFuel = (totalLaps + inp.safetyLaps) * inp.fuelPerLap;
 
         result.totalLaps = totalLaps;
         result.totalFuel = totalFuel;
-        result.finalPits = 0;
-        result.pitLossTotal = 0;
+        result.finalPits = pits;
+        result.pitLossTotal = pits * inp.pitLossSecs;
         result.valid = true;
 
         if (totalFuel > car.capacity) {
             result.warnings.push('Cannot finish without refueling! Need ' + totalFuel.toFixed(1) + 'L but tank is ' + car.capacity + 'L.');
         }
+        if (inp.swapEnabled && pits === 0) {
+            result.warnings.push('Driver swap required but no pit stops scheduled.');
+        }
 
-        result.stints.push({
-            index: 0, laps: totalLaps,
-            fuel: Math.min(totalFuel, car.capacity),
-            isLast: true, pitLap: null
-        });
+        // Build stints (fuel only in stint 1)
+        const stints = pits + 1;
+        let lapCounter = 0;
+        for (let i = 0; i < stints; i++) {
+            const isLast = (i === stints - 1);
+            const baseLaps = Math.floor(totalLaps / stints);
+            const extra = totalLaps % stints;
+            const stintLaps = baseLaps + (i < extra ? 1 : 0);
+            const stintTimeMins = (stintLaps * inp.lapTime) / 60;
+            const stintWarnings = [];
+            if (!isLast && stintTimeMins > inp.maxStintMin) {
+                stintWarnings.push('CRITICAL: ' + stintTimeMins.toFixed(1) + 'm exceeds ' + inp.maxStintMin + 'm stint limit!');
+            }
+            lapCounter += stintLaps;
+            result.stints.push({
+                index: i, laps: stintLaps,
+                fuel: i === 0 ? Math.min(totalFuel, car.capacity) : 0,
+                isLast, pitLap: isLast ? null : lapCounter,
+                timeMins: stintTimeMins, warnings: stintWarnings
+            });
+        }
         return result;
     }
 
+    // ─── Refuel mode ────────────────────────────────────────────
     let finalPits = Math.max(0, inp.userPitStops);
     let totalLaps, totalFuel;
     let corrected = false;
@@ -588,8 +727,10 @@ function computeStrategy(inp) {
         }
 
         if (isLast) {
-            const remainder = totalFuel - fuelLoaded - stintFuel;
-            if (Math.abs(remainder) < 0.5) stintFuel += remainder;
+            // Assign whatever remains to the last stint so loads always
+            // sum exactly to totalFuel (the old <0.5L gate silently
+            // dropped larger remainders).
+            stintFuel = totalFuel - fuelLoaded;
         }
 
         const stintTimeMins = (stintLaps * inp.lapTime) / 60;
@@ -621,10 +762,10 @@ function computeStrategy(inp) {
 }
 
 // ===============================================================
-// TIRE COMPUTATION
+// TIRE COMPUTATION (single dry compound — see model notes above)
 // ===============================================================
 function computeTireStrategy(strategyResult, inp) {
-    const ts = { stints: [], overallAdvice: [], compound: null, valid: false };
+    const ts = { stints: [], overallAdvice: [], valid: false };
 
     if (!strategyResult.valid || !strategyResult.track || !strategyResult.car) return ts;
 
@@ -635,27 +776,17 @@ function computeTireStrategy(strategyResult, inp) {
     const trackWearMult = TRACK_TIRE_WEAR[track.name] || 1.0;
     const engineBias = ENGINE_WEAR_BIAS[car.enginePos] || ENGINE_WEAR_BIAS["Mid"];
 
-    let compound;
-    if (temp >= 28) compound = "DH";
-    else if (temp >= 15) compound = "DM";
-    else if (temp >= 8) compound = "DS";
-    else compound = "DM";
-
-    if (trackWearMult >= 1.3 && compound === "DS") compound = "DM";
-    if (trackWearMult >= 1.3 && compound === "DM" && temp >= 25) compound = "DH";
-
-    ts.compound = compound;
-    const cData = getCompoundData(compound);
-    const effectiveWearRate = cData.wearRate * trackWearMult;
-    const effectiveLife = cData.usableRange.max / effectiveWearRate;
-    const effectiveOptEnd = cData.optimalRange.max / effectiveWearRate;
+    const model = getDryCompoundModel(temp);
+    const effectiveWearRate = model.wearRate * trackWearMult;
+    const effectiveLife = 75 / effectiveWearRate;
+    const effectiveOptEnd = 30 / effectiveWearRate;
 
     let tireAge = 0;
     let tireSet = 1;
 
     strategyResult.stints.forEach((stint, idx) => {
         const stintMins = stint.timeMins || (stint.laps * inp.lapTime / 60);
-        
+
         let changeTires = false;
         let reason = "";
         let urgency = "none";
@@ -665,7 +796,7 @@ function computeTireStrategy(strategyResult, inp) {
         } else {
             const projectedAgeIfKeep = tireAge + stintMins;
             const gripIfKeep = estimateGrip(projectedAgeIfKeep, effectiveOptEnd, effectiveLife);
-            
+
             if (!tiresEnabled) {
                 if (projectedAgeIfKeep > effectiveLife) {
                     urgency = "critical"; reason = "Tires at " + gripIfKeep + "% grip. Dangerous!";
@@ -676,27 +807,23 @@ function computeTireStrategy(strategyResult, inp) {
                 }
             } else {
                 const remainingStints = strategyResult.stints.length - idx;
-                
+
                 if (projectedAgeIfKeep > effectiveLife * 0.9) {
                     changeTires = true;
-                    urgency = "none"; 
-                    reason = `Changed tires (old set would drop to ${gripIfKeep}% grip).`;
+                    reason = "Changed tires (old set would drop to " + gripIfKeep + "% grip).";
                 } else if (projectedAgeIfKeep > effectiveOptEnd) {
                     if (remainingStints <= 1) {
                         changeTires = true;
-                        urgency = "none";
                         reason = "Fresh rubber for final push.";
                     } else if (projectedAgeIfKeep > effectiveOptEnd * 1.3) {
                         changeTires = true;
-                        urgency = "none";
-                        reason = `Changed tires (old set dropping to ${gripIfKeep}% grip).`;
+                        reason = "Changed tires (old set dropping to " + gripIfKeep + "% grip).";
                     } else {
                         const nextStint = strategyResult.stints[idx + 1];
                         if (nextStint) {
                             const nextMins = nextStint.timeMins || (nextStint.laps * inp.lapTime / 60);
                             if (projectedAgeIfKeep + nextMins > effectiveLife * 0.9) {
                                 changeTires = true;
-                                urgency = "none";
                                 reason = "Changed to avoid critical wear in the next stint.";
                             } else {
                                 urgency = "optional";
@@ -716,7 +843,7 @@ function computeTireStrategy(strategyResult, inp) {
         if (changeTires) {
             tireAge = 0;
             tireSet++;
-            urgency = "none"; 
+            urgency = "none";
         }
 
         const actualProjectedAge = tireAge + stintMins;
@@ -734,7 +861,7 @@ function computeTireStrategy(strategyResult, inp) {
             gripEnd: actualGripEnd, frontWearStart: fWearStart, rearWearStart: rWearStart,
             frontWear: fWear, rearWear: rWear,
             changeTires: changeTires, reason: reason, urgency: urgency,
-            tireSet: tireSet, compound: compound
+            tireSet: tireSet
         });
 
         tireAge = actualProjectedAge;
@@ -753,13 +880,14 @@ function computeTireStrategy(strategyResult, inp) {
         }
     }
 
-    ts.overallAdvice.push("Compound: <strong>" + getCompoundFullName(compound) + "</strong> (" + temp + "°C ambient)");
+    ts.overallAdvice.push("Compound: <strong>Dry</strong> (" + escapeHtml(temp) + "°C ambient — ACC has one dry compound)");
     const totalSets = ts.stints.reduce((max, s) => Math.max(max, s.tireSet), 1);
     const changes = ts.stints.filter(s => s.changeTires).length;
     ts.overallAdvice.push("Tire sets needed: <strong>" + totalSets + "</strong> (" + changes + " change" + (changes !== 1 ? "s" : "") + ")");
 
-    if (trackWearMult >= 1.3) ts.overallAdvice.push("<span class='text-yellow-400'>High-wear track!</span> " + track.name + " is aggressive on tires (" + trackWearMult + "x wear).");
+    if (trackWearMult >= 1.3) ts.overallAdvice.push("<span class='text-yellow-400'>High-wear track!</span> " + escapeHtml(track.name) + " is aggressive on tires (" + trackWearMult + "x wear).");
     if (trackWearMult <= 0.8) ts.overallAdvice.push("<span class='text-green-400'>Low-wear track.</span> Tires last longer here. Consider skipping a change.");
+    if (temp >= 30) ts.overallAdvice.push("<span class='text-yellow-400'>Hot conditions:</span> expect faster wear and higher pressures — bleed ~0.1 PSI per +1°C.");
     if (car.enginePos === "Front") ts.overallAdvice.push("<span class='text-yellow-400'>Front-engine:</span> Monitor front temps. Expect higher front degradation.");
     else if (car.enginePos === "Rear") ts.overallAdvice.push("<span class='text-yellow-400'>Rear-engine:</span> Monitor rear temps. Expect higher rear degradation.");
 
@@ -767,13 +895,13 @@ function computeTireStrategy(strategyResult, inp) {
 }
 
 // ===============================================================
-// CHART DRAWING
+// CHART DRAWING (gracefully skipped when Chart.js is unavailable)
 // ===============================================================
-
 function drawTireChart(ts) {
+    if (!hasChart()) return false;
     const ctx = document.getElementById('tireChart');
-    if (!ctx) return;
-    
+    if (!ctx) return false;
+
     if (tireChartInstance) {
         tireChartInstance.destroy();
         tireChartInstance = null;
@@ -790,7 +918,7 @@ function drawTireChart(ts) {
         rWearData.push({ x: currentTime, y: s.rearWearStart });
 
         currentTime += s.stintMins;
-        
+
         gripData.push({ x: currentTime, y: s.gripEnd });
         fWearData.push({ x: currentTime, y: s.frontWear });
         rWearData.push({ x: currentTime, y: s.rearWear });
@@ -863,6 +991,7 @@ function drawTireChart(ts) {
             }
         }
     });
+    return true;
 }
 
 function gripColor(pct) {
@@ -909,8 +1038,11 @@ function renderTireStrategy(ts) {
         return;
     }
 
-    D.tirePlotContainer.classList.remove('hidden');
-    drawTireChart(ts);
+    if (drawTireChart(ts)) {
+        D.tirePlotContainer.classList.remove('hidden');
+    } else {
+        D.tirePlotContainer.classList.add('hidden');
+    }
 
     D.tireSummary.innerHTML = ts.overallAdvice.map(a => '<div class="p-2 rounded bg-gray-800/50 border border-gray-700 text-sm">' + a + '</div>').join('');
 
@@ -923,13 +1055,13 @@ function renderTireStrategy(ts) {
         return '<div class="p-4 rounded-lg ' + bgCls + ' border ' + borderCls + '">'
             + '<div class="flex justify-between items-center mb-2">'
             +   '<p class="font-bold text-yellow-300">Stint ' + (s.stintIndex + 1) + '</p>'
-            +   '<span class="text-[10px] text-gray-400 font-mono">Set #' + s.tireSet + ' | ' + getCompoundFullName(s.compound) + '</span>'
+            +   '<span class="text-[10px] text-gray-400 font-mono">Set #' + s.tireSet + ' | Dry</span>'
             + '</div>'
             + '<div class="mb-2">' + changeLabel + '</div>'
             + '<div class="mb-2">' + buildGripBar(s.gripStart, s.gripEnd) + '</div>'
             + '<div class="mb-2">' + buildWearBars(s.frontWear, s.rearWear) + '</div>'
             + '<p class="text-xs text-gray-400">' + Math.round(s.stintMins) + ' min | Age: ' + Math.round(s.tireAgeStart) + '→' + Math.round(s.tireAgeEnd) + ' min</p>'
-            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#6b7280') + '">' + s.reason + '</p>'
+            + '<p class="text-xs mt-1" style="color:' + (s.urgency === 'critical' ? '#fca5a5' : s.urgency === 'recommended' ? '#fcd34d' : s.urgency === 'optional' ? '#93c5fd' : '#6b7280') + '">' + escapeHtml(s.reason) + '</p>'
             + '</div>';
     }).join('');
 }
@@ -943,82 +1075,97 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     var elecMode = inp.elecProfile;
     var temp = inp.ambientTemp;
     var rakeMod = 0, wingMod = 0;
-    
-    if (aggro === 'moderate') { rakeMod = 5; wingMod = 1; }
-    if (aggro === 'aggressive') { rakeMod = 10; wingMod = 2; }
 
-    // 1. Tire Pressures
+    if (aggro === 'moderate') { rakeMod = 4; wingMod = 1; }
+    if (aggro === 'aggressive') { rakeMod = 8; wingMod = 2; }
+
+    // 1. Tire Pressures (GT3 dry target hot pressure ≈ 26.5–27.0 PSI)
     var calcCold = 25.0 - ((temp - 20) * 0.1);
     calcCold = clampVal(calcCold, 20.0, 28.5);
     advice.push({
         title: "Tire Pressures",
-        text: 'Cold: <strong>' + (calcCold - 0.2).toFixed(1) + '-' + (calcCold + 0.2).toFixed(1) + ' PSI</strong><br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0</span>'
+        text: 'Cold: <strong>' + (calcCold - 0.2).toFixed(1) + '-' + (calcCold + 0.2).toFixed(1) + ' PSI</strong><br><span class="text-[10px] text-gray-500">Target Hot: 26.5-27.0 (dry)</span>'
     });
 
     // 2. Electronics
-    var maxTC = car.maxTC || 11;
-    var maxABS = car.maxABS || 11;
+    var maxTC = car.maxTC;
+    var maxABS = car.maxABS;
     var tc = car.elec.tc;
     var tc2 = car.elec.tc2;
     var abs = car.elec.abs;
     var elecNote = "";
-    
+
     if (elecMode === 'safe') {
         tc += 2; abs += 2;
-        if (car.elec.hasTC2) tc2 += 2;
+        if (car.hasTC2 && tc2 !== null) tc2 += 2;
         elecNote = "Endurance consistency.";
     } else if (elecMode === 'balanced') {
         tc += 1; abs += 1;
-        if (car.elec.hasTC2) tc2 += 1;
+        if (car.hasTC2 && tc2 !== null) tc2 += 1;
         elecNote = "Pace with safety margin.";
     } else {
         elecNote = "Aggressive. Minimal aids.";
     }
-    
+
     if (track.curbs === "Extreme" || track.curbs === "Very High") {
         abs += 1;
         elecNote += ' <span class="text-yellow-400 text-[10px]">+1 ABS curbs</span>';
     }
-    
-    tc = clampVal(tc, 0, maxTC);
-    abs = clampVal(abs, 0, maxABS);
-    if (car.elec.hasTC2) tc2 = clampVal(tc2, 0, maxTC);
 
-    var mapNum = car.mapRace;
-    if (durationMins > 90 && inp.fuelStrategy === 'minimal') mapNum = car.mapFuel;
-    var eTxt = 'Map: <strong>' + mapNum + '</strong> | ABS: <strong>' + abs + '</strong><br>TC1: <strong>' + tc + '</strong>';
-    if (car.elec.hasTC2) eTxt += ' | TC2: <strong>' + tc2 + '</strong>';
-    
+    tc = clampVal(tc, 0, maxTC);
+    abs = clampVal(abs, 1, maxABS);
+    if (car.hasTC2 && tc2 !== null) tc2 = clampVal(tc2, 0, maxTC);
+
+    // Engine maps: map 1 is the fastest on every car; the next few maps
+    // trade pace for fuel; the last maps are wet/limp. Counts vary per
+    // car (verified): e.g. Mercedes-AMG has only 3, McLaren/Ferrari up to 12.
+    var mapTxt = 'Map: <strong>1</strong>';
+    var mapNote = car.maps + ' maps available.';
+    if (durationMins > 90 && inp.fuelStrategy === 'minimal' && car.maps > 2) {
+        mapTxt = 'Map: <strong>2' + (car.maps >= 4 ? '-3' : '') + '</strong>';
+        mapNote = 'Fuel-saving map (of ' + car.maps + ').';
+    }
+    var eTxt = mapTxt + ' | ABS: <strong>' + abs + '</strong><br>TC1: <strong>' + tc + '</strong>';
+    if (car.hasTC2 && tc2 !== null) eTxt += ' | TC2: <strong>' + tc2 + '</strong>';
+
     advice.push({
         title: "Electronics",
-        text: eTxt + '<br><span class="text-[10px] text-gray-500">' + elecNote + '</span>'
+        text: eTxt + '<br><span class="text-[10px] text-gray-500">' + elecNote + ' ' + mapNote + '</span>'
     });
 
     // 3. Rear Wing
-    var maxW = car.maxWing || 11;
+    var maxW = car.maxWing;
     var wParts = track.wing.split('-');
-    var wMin = clampVal(parseInt(wParts[0]) + wingMod, 0, maxW);
-    var wMax = wParts.length > 1 ? clampVal(parseInt(wParts[1]) + wingMod, 0, maxW) : wMin;
-    var finalWing = wMin === wMax ? wMin : (wMin + "-" + wMax);
+    var wMin = clampVal(parseInt(wParts[0], 10) + wingMod, 0, maxW);
+    var wMax = wParts.length > 1 ? clampVal(parseInt(wParts[1], 10) + wingMod, 0, maxW) : wMin;
+    var finalWing = wMin === wMax ? String(wMin) : (wMin + "-" + wMax);
     var wingNote = wingMod > 0 ? ('<br><span class="text-[10px] text-gray-500">+' + wingMod + ' for ' + aggro + ' rake</span>') : '<br><span class="text-[10px] text-gray-500">' + (aggro === 'default' ? 'Default ACC setup' : 'Standard setup') + '</span>';
-    
-    if (wMax === maxW && (parseInt(wParts[1] || wParts[0]) + wingMod > maxW)) {
+
+    if (wMax === maxW && (parseInt(wParts[1] || wParts[0], 10) + wingMod > maxW)) {
         wingNote += ' <span class="text-yellow-400 text-[10px] font-bold">[Capped at ' + maxW + ']</span>';
     }
-    
+
     advice.push({
         title: "Rear Wing",
         text: 'Setting: <strong>' + finalWing + '</strong>' + wingNote
     });
 
-    // 4. Ride Heights (WITH SMART ADJUSTMENT)
-    var minF = car.minFRH || 50;
-    var maxF = car.maxFRH || 75;
-    var maxRear = car.maxRRH || 95;
-    var minRear = car.minRRH || 55;
+    // 4. Ride Heights (with smart rake adjustment)
+    var minF = car.minFRH;
+    var maxF = car.maxFRH;
+    var maxRear = car.maxRRH;
+    var minRear = car.minRRH;
     var refFront = car.baseFRH;
     var compNote = "";
     var targetDiff = track.rakeDiff + rakeMod;
+
+    // Per-car rake cap (e.g. Ferrari 296: keep rake below ~20mm to avoid
+    // snap oversteer; McLaren 720S Evo prefers low rake)
+    if (car.maxRake && targetDiff > car.maxRake) {
+        targetDiff = car.maxRake;
+        compNote += '<br><span class="text-yellow-400 text-[10px] font-bold">'
+                  + 'Rake capped at +' + car.maxRake + 'mm (car prefers low rake)</span>';
+    }
 
     // True minimum front: max of car floor AND track floor
     var absoluteMinF = Math.max(minF, track.minFRH || 0);
@@ -1033,7 +1180,7 @@ function generateSetupAdvice(track, car, durationMins, inp) {
 
     var targetRear = refFront + targetDiff;
 
-    // Smart adjustment: lower front to preserve rake if rear overflows
+    // Lower front to preserve rake if the rear overflows its range
     if (targetRear > maxRear) {
         var excess = targetRear - maxRear;
         var availableDrop = refFront - absoluteMinF;
@@ -1048,9 +1195,8 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     var refRear = clampVal(targetRear, minRear, maxRear);
     refFront = clampVal(refFront, absoluteMinF, maxF);
 
-    // Prevent negative rake, but also respect minRear
+    // Prevent negative rake, while respecting the rear minimum
     if (refRear < refFront) {
-        // If the rear's physical minimum is above the front, the front must come up
         if (minRear > refFront) {
             refFront = Math.min(minRear, maxF);
             refRear = minRear;
@@ -1068,19 +1214,19 @@ function generateSetupAdvice(track, car, durationMins, inp) {
                   + 'Target rake +' + targetDiff + 'mm reduced to +'
                   + actualDiff + 'mm (car limits)</span>';
     }
-    
+
     var rh = 'Front: <strong>' + refFront + 'mm</strong><br>Rear: <strong>' + refRear + 'mm</strong>';
-    if (car.rakeSens) rh += '<br><span class="text-red-400 text-[10px]">Sensitive Floor</span>';
-    
+    if (car.rakeSens) rh += '<br><span class="text-red-400 text-[10px]">Rake-sensitive floor</span>';
+
     advice.push({
         title: "Ride Heights",
-        text: rh + compNote + '<br><span class="text-[10px] text-gray-500 font-mono">(Rake +' + actualDiff + 'mm)</span>'
+        text: rh + compNote + '<br><span class="text-[10px] text-gray-500 font-mono">(Rake +' + actualDiff + 'mm — approx, verify in-game)</span>'
     });
 
     // 5. Alignment
     advice.push({
         title: "Alignment",
-        text: car.enginePos === "Front" ? '<strong>More Negative Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>' : '<strong>Standard Max Neg Camber & Mild Toe</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
+        text: car.enginePos === "Front" ? '<strong>More Front Toe-Out</strong><br><span class="text-[10px] text-gray-500">Sharper turn-in for heavy nose.</span>' : '<strong>Standard Max Neg Camber & Mild Toe</strong><br><span class="text-[10px] text-gray-500">Standard GT3 alignment.</span>'
     });
 
     // 6. Anti-Roll Bars
@@ -1093,7 +1239,7 @@ function generateSetupAdvice(track, car, durationMins, inp) {
     // 7. Brake Bias
     advice.push({
         title: "Brake Bias",
-        text: '<strong>' + (car.optBB || "54.0% - 56.0%") + '</strong><br><span class="text-[10px] text-gray-500">Optimal starting range.</span>'
+        text: '<strong>' + car.optBB + '</strong><br><span class="text-[10px] text-gray-500">Optimal starting range.</span>'
     });
 
     // 8. Bumpstops
@@ -1144,8 +1290,8 @@ function renderResults(res) {
     if (res.valid && res.corrected) setPitStopsQuiet(res.finalPits);
 
     var msgs = [];
-    if (res.correctionMsg) msgs.push('<strong>Auto-Adjusted:</strong> ' + res.correctionMsg);
-    res.warnings.forEach(function(w) { msgs.push(w); });
+    if (res.correctionMsg) msgs.push('<strong>Auto-Adjusted:</strong> ' + escapeHtml(res.correctionMsg));
+    res.warnings.forEach(function(w) { msgs.push(escapeHtml(w)); });
     if (msgs.length > 0) {
         D.message.innerHTML = msgs.join('<br>');
         D.message.classList.remove('hidden');
@@ -1156,14 +1302,15 @@ function renderResults(res) {
     D.stintDetails.innerHTML = '';
     if (res.valid) {
         var lapCounter = 0;
+        var html = '';
         res.stints.forEach(function(st) {
             lapCounter += st.laps;
             var notes = (st.warnings || []).map(function(w) {
-                var cls = w.startsWith('CRITICAL') ? 'warning' : 'recommendation';
-                return '<span class="' + cls + ' text-[10px]">' + w + '</span>';
+                var cls = w.indexOf('CRITICAL') === 0 ? 'warning' : 'recommendation';
+                return '<span class="' + cls + ' text-[10px]">' + escapeHtml(w) + '</span>';
             }).join('');
 
-            D.stintDetails.innerHTML +=
+            html +=
                 '<div class="p-4 rounded-lg bg-gray-800/50 border border-gray-700">'
                 + '<p class="font-bold text-yellow-300">Stint ' + (st.index + 1) + ' (' + st.laps + ' Laps)</p>'
                 + '<p>Load: <span class="font-mono text-blue-300">' + st.fuel.toFixed(1) + ' L</span></p>'
@@ -1171,6 +1318,7 @@ function renderResults(res) {
                 + '<div class="mt-1 flex flex-col">' + notes + '</div>'
                 + '</div>';
         });
+        D.stintDetails.innerHTML = html;
     }
 
     if (res.track && res.car) {
@@ -1179,6 +1327,8 @@ function renderResults(res) {
         D.setupAdvice.innerHTML = advice.map(function(a) {
             return '<div class="p-3 rounded bg-gray-900 border border-gray-700"><h4 class="text-blue-400 font-bold mb-1 text-xs uppercase tracking-wider">' + a.title + '</h4><p class="text-gray-300 leading-tight">' + a.text + '</p></div>';
         }).join('');
+    } else {
+        D.setupAdvice.innerHTML = '';
     }
 
     var tireInputs = getInputs();
@@ -1197,39 +1347,44 @@ function update() {
     renderResults(result);
 }
 
-function updateFuelEstimate() {
+function applyTrackCarEstimates() {
     var track = TRACK_DATA.find(function(t) { return t.name === D.track.value; });
     var car = CAR_DATA.find(function(c) { return c.name === D.car.value; });
     if (track && car) {
         D.fuelPerLap.value = (track.baseFuel * car.factor).toFixed(2);
         D.avgLapTime.value = formatLapTime(track.lapTimeSeconds);
     }
-    update();
 }
 
-function debouncedSaveAndUpdate() {
-    if (suppressPitEvents) return;
+function scheduleSave() {
     clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(function() { saveSettings(); }, 500);
-    update();
+    saveTimeout = setTimeout(saveSettings, 500);
 }
 
 function bindEvents() {
-    D.track.addEventListener('change', function() { updateFuelEstimate(); debouncedSaveAndUpdate(); });
-    D.car.addEventListener('change', function() { updateFuelEstimate(); debouncedSaveAndUpdate(); });
+    // Track/car change: refresh the estimates, then one single
+    // update + save (the old code computed and rendered twice).
+    [D.track, D.car].forEach(function(el) {
+        el.addEventListener('change', function() {
+            applyTrackCarEstimates();
+            update();
+            scheduleSave();
+        });
+    });
 
     var inputs = [
         D.fuelStrategy, D.avgLapTime, D.fuelPerLap, D.raceDuration,
         D.maxStintTime, D.pitStops, D.safetyLaps, D.pitLossTime,
         D.ambientTemp, D.rake, D.elec
     ];
+    var onEdit = function() { update(); scheduleSave(); };
     inputs.forEach(function(el) {
-        el.addEventListener('input', debouncedSaveAndUpdate);
-        el.addEventListener('change', debouncedSaveAndUpdate);
+        el.addEventListener('input', onEdit);
+        el.addEventListener('change', onEdit);
     });
 
     [D.refuel, D.tires, D.swap].forEach(function(el) {
-        el.addEventListener('change', debouncedSaveAndUpdate);
+        el.addEventListener('change', onEdit);
     });
 }
 
@@ -1242,7 +1397,7 @@ function showUpdateBanner(worker) {
     banner.innerHTML = '<span><strong style="color:#58a6ff;">Update Available</strong><br>'
         + '<span style="font-size:0.75rem;color:#8b949e;">A new version of ACC Strategist is ready.</span></span>'
         + '<button id="update-btn" style="padding:0.5rem 1rem;background:#238636;color:white;border:none;border-radius:0.5rem;cursor:pointer;font-weight:600;white-space:nowrap;font-size:0.875rem;">Update Now</button>'
-        + '<button id="dismiss-btn" style="padding:0.5rem;background:none;border:none;color:#8b949e;cursor:pointer;font-size:1.25rem;line-height:1;">&times;</button>';
+        + '<button id="dismiss-btn" aria-label="Dismiss" style="padding:0.5rem;background:none;border:none;color:#8b949e;cursor:pointer;font-size:1.25rem;line-height:1;">&times;</button>';
 
     document.body.appendChild(banner);
 
@@ -1256,45 +1411,60 @@ function showUpdateBanner(worker) {
     });
 }
 
+function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION)
+        .then(function(reg) {
+            console.log('[App] SW registered, scope:', reg.scope);
+            setInterval(function() { reg.update(); }, 30 * 60 * 1000);
+
+            // A new SW may already be waiting from a previous visit
+            if (reg.waiting && navigator.serviceWorker.controller) {
+                showUpdateBanner(reg.waiting);
+            }
+
+            reg.addEventListener('updatefound', function() {
+                var newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', function() {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // The SW no longer calls skipWaiting() on install,
+                        // so this banner is the only path to activation —
+                        // no surprise mid-session reloads.
+                        showUpdateBanner(newWorker);
+                    }
+                });
+            });
+        })
+        .catch(function(err) { console.warn('[App] SW registration failed:', err); });
+
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!refreshing) {
+            refreshing = true;
+            // Flush any pending debounced save so the reload can't
+            // lose a just-typed value.
+            flushSave();
+            location.reload();
+        }
+    });
+}
+
 function init() {
     D.footerVersion.textContent = 'v' + APP_VERSION;
 
-    TRACK_DATA.sort(function(a, b) { return a.name.localeCompare(b.name); })
+    TRACK_DATA.slice().sort(function(a, b) { return a.name.localeCompare(b.name); })
         .forEach(function(t) { D.track.add(new Option(t.name, t.name)); });
-    CAR_DATA.sort(function(a, b) { return a.name.localeCompare(b.name); })
+    CAR_DATA.slice().sort(function(a, b) { return a.name.localeCompare(b.name); })
         .forEach(function(c) { D.car.add(new Option(c.name, c.name)); });
 
     var loaded = loadSettings();
-    if (!loaded) updateFuelEstimate();
+    if (!loaded) applyTrackCarEstimates();
 
     bindEvents();
     update();
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION)
-            .then(function(reg) {
-                console.log('[App] SW registered, scope:', reg.scope);
-                setInterval(function() { reg.update(); }, 30 * 60 * 1000);
-                reg.addEventListener('updatefound', function() {
-                    var newWorker = reg.installing;
-                    if (!newWorker) return;
-                    newWorker.addEventListener('statechange', function() {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showUpdateBanner(newWorker);
-                        }
-                    });
-                });
-            })
-            .catch(function(err) { console.warn('[App] SW registration failed:', err); });
-
-        var refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-            if (!refreshing) {
-                refreshing = true;
-                location.reload();
-            }
-        });
-    }
+    registerServiceWorker();
 }
 
 document.addEventListener('DOMContentLoaded', init);
